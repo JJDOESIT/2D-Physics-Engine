@@ -8,8 +8,6 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
-import it.jjdoes.PhysicsEngine.SoftBody.GodCode;
-
 public class Main implements ApplicationListener {
     float screenWidth;
     float screenHeight;
@@ -19,7 +17,6 @@ public class Main implements ApplicationListener {
     PolygonSpriteBatch polygonSpriteBatch;
     SpriteBatch spriteBatch;
     Stage stage;
-    GodCode gc;
 
     @Override
     public void create() {

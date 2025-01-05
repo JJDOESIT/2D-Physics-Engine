@@ -9,6 +9,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 
 import java.util.ArrayList;
 
+import it.jjdoes.PhysicsEngine.AABB;
 import it.jjdoes.PhysicsEngine.World;
 
 public class Quadtree {

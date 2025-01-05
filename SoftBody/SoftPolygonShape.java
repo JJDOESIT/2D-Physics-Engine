@@ -9,7 +9,7 @@ import com.badlogic.gdx.math.Vector2;
 
 import java.util.ArrayList;
 
-import it.jjdoes.PhysicsEngine.RigidBody.AABB;
+import it.jjdoes.PhysicsEngine.AABB;
 import it.jjdoes.PhysicsEngine.RigidBody.Triangulation;
 
 public class SoftPolygonShape {
@@ -17,71 +17,71 @@ public class SoftPolygonShape {
     private final float sideLength;
     private final float step;
     private final float creationRotation;
-    private float springLength;
-    private float springStrength;
-    private float angularVelocity;
+    private final float springLength;
     private final Color color;
+    private final float mass;
     private final boolean moveable;
     private final ArrayList<SoftPoint> points;
-    private ArrayList<Spring> springs;
-    private float inertia;
+    private final ArrayList<Spring> springs;
     private SoftPolygonShape matcher;
 
-    public SoftPolygonShape(Vector2 origin, Color color, int numPoints, float sideLength, float step, float creationRotation, float mass, boolean moveable, float springLength, float springStrength){
-        // Set the number of points the polygon has
+    // Constructor
+    public SoftPolygonShape(Vector2 origin, Color color, int numPoints, float sideLength, float step, float creationRotation, float mass, boolean moveable, float springLength){
+        // Initialize data
         this.numPoints = numPoints;
-        this.angularVelocity = 0;
         this.step = step;
         this.creationRotation = creationRotation;
         this.sideLength = sideLength;
         this.springLength = springLength;
-        this.springStrength = springStrength;
         this.color = color;
+        this.springs = new ArrayList<>();
+        this.points = new ArrayList<>();
+        this.mass = mass;
+        this.moveable = moveable;
+
         // Calculate the radius based on the given side length (side length / 2 * sin(PI / numPoints)
         float radius = (float) (sideLength / (2 * Math.sin(Math.PI / numPoints)));
-        // Initialize the points ArrayList
-        points = new ArrayList<>();
+        // Create the polygon by adding SoftPoints
         for (int point = 0; point < numPoints; point++){
             float localX = MathUtils.cosDeg(creationRotation) * radius;
             float localY = MathUtils.sinDeg(creationRotation) * radius;
-            points.add(new SoftPoint(new Vector2(origin.x + localX, origin.y + localY), mass));
+            this.points.add(new SoftPoint(new Vector2(origin.x + localX, origin.y + localY), mass, moveable));
             creationRotation += step;
         }
-        this.springs = new ArrayList<>();
-        this.moveable = moveable;
-        this.calculateInertia();
+        // Initialize the outer springs to connect each vertex
         this.initializeOuterSprings();
     }
 
     // Initialize the outer springs of the shape
     public void initializeOuterSprings(){
+        // Loop through each vertex
         for (int index = 0; index < this.points.size() - 1; index++){
-            Spring spring = new Spring(this.points.get(index), this.points.get(index + 1), this.springLength, this.springStrength);
+            Spring spring = new Spring(this.points.get(index), this.points.get(index + 1), this.springLength);
             this.springs.add(spring);
         }
-        Spring spring = new Spring(this.points.get(this.points.size() - 1), this.points.get(0), this.springLength, this.springStrength);
+        // Connect the last vertex to the first
+        Spring spring = new Spring(this.points.get(this.points.size() - 1), this.points.get(0), this.springLength);
         this.springs.add(spring);
+    }
+
+    // Override
+    public void initializeInnerSprings(){}
+
+    // Remove inner springs
+    public void removeInnerSprings(){
+        int start = this.springs.size() - 1;
+        int stop = this.points.size() - 1;
+
+        for (int index = start; index > stop; index--){
+            this.springs.remove(index);
+        }
     }
 
     // Initialize the shaper matcher
     public void initializeMatcher(){
-        this.matcher = new SoftPolygonShape(this.getOrigin(), this.color, this.numPoints, this.sideLength, this.step, this.creationRotation, this.getMass(), false, this.springLength, this.springStrength);
+        this.matcher = new SoftPolygonShape(this.getOrigin(), this.color, this.numPoints, this.sideLength, this.step, this.creationRotation, this.mass, false, this.springLength);
         for (int index = 0; index < this.points.size(); index++){
-            this.matcher.addSpring(new Spring(this.matcher.getPoints().get(index), this.points.get(index), 0, 50));
-        }
-    }
-
-    public void calculatePressure(float pressure) {
-        float totalVolume = 0;
-
-        // Calculate the total volume of all springs
-        for (Spring spring : this.springs) {
-            totalVolume += spring.calculateVolume();
-        }
-
-        // Apply pressure forces to each spring
-        for (Spring spring : this.springs) {
-            spring.calculatePressure(totalVolume, pressure);
+            this.matcher.addSpring(new Spring(this.matcher.getPoints().get(index), this.points.get(index), 0));
         }
     }
 
@@ -97,17 +97,13 @@ public class SoftPolygonShape {
             savedVelocities.add(softPoint.getVelocity());
 
             // Update velocity with current forces
-            softPoint.offsetVelocity((softPoint.getForce().x / softPoint.getMass()) * time,
-                (softPoint.getForce().y / softPoint.getMass()) * time);
-        }
+            softPoint.offsetVelocity((softPoint.getForce().x) * time,
+                (softPoint.getForce().y) * time);
 
-        // Apply displacements
-        for (SoftPoint softPoint : this.points) {
             drx = softPoint.getVelocity().x * time;
             dry = softPoint.getVelocity().y * time;
 
             softPoint.offsetOrigin(drx, dry);
-            softPoint.resetForce();
         }
         return new Object[] {savedForces, savedVelocities};
     }
@@ -120,9 +116,9 @@ public class SoftPolygonShape {
             SoftPoint softPoint = this.points.get(index);
 
             float vx = savedVelocities.get(index).x +
-                (((softPoint.getForce().x + savedForces.get(index).x) / softPoint.getMass()) * time) / 2;
+                ((((softPoint.getForce().x + savedForces.get(index).x)) * time) / 2);
             float vy = savedVelocities.get(index).y +
-                (((softPoint.getForce().y + savedForces.get(index).y) / softPoint.getMass()) * time) / 2;
+                ((((softPoint.getForce().y + savedForces.get(index).y)) * time) / 2);
 
             softPoint.setVelocity(vx, vy);
 
@@ -131,6 +127,47 @@ public class SoftPolygonShape {
 
             softPoint.offsetOrigin(drx, dry);
             softPoint.resetForce();
+        }
+    }
+
+    // Apply resistance to each point
+    public void calculateResistance(float resistance){
+        for (SoftPoint softPoint : this.points){
+            softPoint.calculateResistance(resistance);
+        }
+    }
+
+    // Apply gravity to each point
+    public void calculateGravity(float gravity){
+        for (SoftPoint softPoint : this.points){
+            softPoint.calculateGravity(gravity);
+        }
+    }
+
+    // Calculate the spring force for each spring
+    public void calculateSpringForce(float strength, float dampener){
+        for (Spring spring : this.springs){
+            spring.applyForce(strength, dampener);
+        }
+    }
+
+    // Calculate the pressure of the shape
+    public void calculatePressure(float pressure) {
+        float totalVolume = 0;
+
+        // Calculate the total volume of all springs
+        for (Spring spring : this.springs) {
+            totalVolume += spring.calculateVolume();
+        }
+
+        // Avoid division by 0
+        if (totalVolume == 0){
+            totalVolume = 1;
+        }
+
+        // Apply pressure forces to each spring
+        for (Spring spring : this.springs) {
+            spring.calculatePressure(totalVolume, pressure);
         }
     }
 
@@ -143,48 +180,44 @@ public class SoftPolygonShape {
         return this.color;
     }
 
-    public float getInverseInertia(){
-        if (this.moveable){
-            return 1 / this.inertia;
-        }
-        return 0;
-    }
-
-    public void setAngularVelocity(float angularVelocity){
-        this.angularVelocity = angularVelocity;
-    }
-
-    public Vector2 getOrigin(){
-        Vector2 origin = new Vector2();
-        float totalX = 0;
-        float totalY = 0;
-        for (SoftPoint sp : this.points){
-            Vector2 spOrigin = sp.getOrigin();
-            totalX += spOrigin.x;
-            totalY += spOrigin.y;
-        }
-        totalX /= this.points.size();
-        totalY /= this.points.size();
-        origin.set(totalX, totalY);
-        return origin;
-    }
-
-    public ArrayList<SoftPoint> getPoints(){
-        return this.points;
-    }
-
-    public void addPoint(SoftPoint point){
-        this.points.add(point);
-    }
-
+    // Return the list of springs
     public ArrayList<Spring> getSprings(){
         return this.springs;
     }
 
+    // Return the estimated origin of the shape
+    // Note: Done by averaging the (x,y) coordinates of each vertex
+    public Vector2 getOrigin(){
+        float totalX = 0;
+        float totalY = 0;
+
+        // Loop through each vertex
+        for (SoftPoint softPoint : this.points){
+            // Add the (x,y) coordinates to the running sum
+            Vector2 origin = softPoint.getOrigin();
+            totalX += origin.x;
+            totalY += origin.y;
+        }
+
+        // Divide the total by the number of vertices
+        totalX /= this.points.size();
+        totalY /= this.points.size();
+
+        // Return the origin
+        return new Vector2(totalX, totalY);
+    }
+
+    // Return the points list
+    public ArrayList<SoftPoint> getPoints(){
+        return this.points;
+    }
+
+    // Add a spring
     public void addSpring(Spring spring){
         this.springs.add(spring);
     }
 
+    // Return the vertices coordinates as a float array
     public float[] getVerticesArray(){
         float[] vertices = new float[this.points.size() * 2];
         for (int index = 0; index < this.points.size(); index++){
@@ -195,6 +228,7 @@ public class SoftPolygonShape {
         return vertices;
     }
 
+    // Return the vertices coordinates as an a Vector2 array
     public Vector2[] getVerticesVector(){
         Vector2[] vertices = new Vector2[this.points.size()];
         for (int index = 0; index < this.points.size(); index++){
@@ -203,14 +237,16 @@ public class SoftPolygonShape {
         return vertices;
     }
 
-    public Vector2[][] getSpringVectors(){
+    // Return the edges of all springs as an array of Vector2 arrays
+    public Vector2[][] getSpringsEdges(){
         Vector2[][] springs = new Vector2[this.springs.size()][2];
         for (int index = 0; index < this.springs.size(); index++){
-            springs[index] = this.springs.get(index).getSpringVector();
+            springs[index] = this.springs.get(index).getEdge();
         }
         return springs;
     }
 
+    // Return the edges of the shape as an array of Vector2 arrays
     public Vector2[][] getEdges(){
         Vector2[][] edges = new Vector2[this.points.size()][2];
         for (int index = 0; index < this.points.size() - 1; index++){
@@ -226,6 +262,7 @@ public class SoftPolygonShape {
         return edges;
     }
 
+    // Return the vectors of a given set of edges as a Vector2 array
     public Vector2[] getVectors(Vector2[][] edges){
         Vector2[] vectors = new Vector2[edges.length];
         for (int edge = 0; edge < edges.length; edge++){
@@ -237,7 +274,7 @@ public class SoftPolygonShape {
         return vectors;
     }
 
-    // Return the AABB of the circle shape
+    // Return the AABB of the shape
     public AABB getAABB(){
         float minX = Float.MAX_VALUE;
         float maxX = Float.MIN_VALUE;
@@ -252,70 +289,34 @@ public class SoftPolygonShape {
             minY = Math.min(minY, vertex.y);
             maxY = Math.max(maxY, vertex.y);
         }
-
         return new AABB(minX, minY, maxX, maxY);
     }
 
+    // Return whether the shape is moveable or not
     public boolean isMoveable(){
         return this.moveable;
     }
 
-    public void moveAll(Vector2 offset){
+    // Move all vertices by the given offset
+    public void offsetAll(Vector2 offset){
         for (SoftPoint sp : this.points){
-            sp.moveOrigin(offset);
+            sp.offsetOrigin(offset);
         }
     }
 
+    // Rotate all vertices by the given angle
     public void rotateAll(float angle){
+        // Get the estimated origin of the shape
         Vector2 origin = this.getOrigin();
-        for (SoftPoint sp : this.points){
-            Vector2 spOrigin = sp.getOrigin();
+        // Loop through all vertices
+        for (SoftPoint softPoint : this.points){
+            // Get the origin of the vertex
+            Vector2 spOrigin = softPoint.getOrigin();
+            // Rotate the vertex by the given angle around the origin
             float newX = (float) (origin.x + ((spOrigin.x - origin.x) * Math.cos(Math.toRadians(angle)) - (spOrigin.y - origin.y) * Math.sin(Math.toRadians(angle))));
             float newY = (float) (origin.y + ((spOrigin.x - origin.x) * Math.sin(Math.toRadians(angle)) + (spOrigin.y - origin.y) * Math.cos(Math.toRadians(angle))));
-            sp.setOrigin(new Vector2(newX, newY));
-        }
-    }
-
-    public Vector2 getVelocity(){
-        Vector2 velocity = new Vector2();
-        for (SoftPoint sp : this.points){
-            velocity.add(sp.getVelocity());
-        }
-        return velocity.scl(1f / this.points.size());
-    }
-
-    public float getInverseMass(){
-        float mass = 0;
-        for (SoftPoint sp : this.points){
-            mass += sp.getMass();
-        }
-        mass /= this.points.size();
-        if (this.moveable){
-            return 1 / mass;
-        }
-        return 0;
-    }
-
-    public float getMass(){
-        float mass = 0;
-        for (SoftPoint sp : this.points){
-            mass += sp.getMass();
-        }
-        mass /= this.points.size();
-        if (this.moveable){
-            return mass;
-        }
-        return 0;
-    }
-
-    public float getAngularVelocity(){
-        return this.angularVelocity;
-    }
-
-    // Offset each point's velocity by the given velocity
-    public void offsetVelocity(Vector2 velocity){
-        for (SoftPoint softPoint : this.points){
-            softPoint.offsetVelocity(velocity);
+            // Set the vertex to be at the new origin
+            softPoint.setOrigin(new Vector2(newX, newY));
         }
     }
 
@@ -326,71 +327,31 @@ public class SoftPolygonShape {
         }
     }
 
-    public void calculateSpringForce(float strength, float dampener){
-        for (Spring spring : this.springs){
-            spring.applyForce(strength, dampener);
-        }
-    }
-
-    public void applyGravity(float gravity, float time){
+    // Offset each point's velocity by the given velocity
+    public void offsetVelocity(Vector2 velocity){
         for (SoftPoint softPoint : this.points){
-            softPoint.applyGravity(gravity, time);
+            softPoint.offsetVelocity(velocity);
         }
     }
 
-    public void integrate(float time){
-        if (this.moveable){
-            for (SoftPoint softPoint : this.points){
-                softPoint.integrate(time);
-            }
-            this.rotateAll((float) Math.toDegrees(angularVelocity) * time);
-        }
-    }
-
+    // Return the estimated rotation angle of the shape given another shape
+    // Note: The given shape should be of same type!
     public float getAngle(SoftPolygonShape shapeTwo){
         float angle = 0;
+        // Get the estimated origin of the shape
         Vector2 origin = this.getOrigin();
+        // Loop through each vertex
         for (int index = 0; index < this.points.size(); index++){
+            // Calculate the angle between the origin and each vertex
             Vector2 shapeOneVector = new Vector2(this.points.get(index).getOrigin().sub(origin));
             Vector2 shapeTwoVector = new Vector2(shapeTwo.getPoints().get(index).getOrigin().sub(origin));
             angle += (float) Math.atan2(shapeOneVector.crs(shapeTwoVector), shapeOneVector.dot(shapeTwoVector));
         }
+        // Return the rotation angle
         return (float) Math.toDegrees(angle / this.points.size());
     }
 
-    // Function to calculate the inertia of a polygon
-    public void calculateInertia(){
-        // Create a temporary Vector2[] to hold the vertices in a Vector2 format
-        int n = this.points.size();
-        float area = 0f;
-        float inertia = 0f;
-
-        for (int i = 0; i < n; i++) {
-            // Current and next vertex (wrapping around for the last vertex)
-            float x1 = this.points.get(i).getOrigin().x;
-            float y1 = this.points.get(i).getOrigin().y;
-            float x2 = this.points.get((i + 1) % n).getOrigin().x;
-            float y2 = this.points.get((i + 1) % n).getOrigin().y;
-
-            // Shoelace area contribution
-            float crossProduct = (x1 * y2 - x2 * y1);
-            area += crossProduct;
-
-            // Inertia contribution
-            inertia += crossProduct * (x1 * x1 + x1 * x2 + x2 * x2 + y1 * y1 + y1 * y2 + y2 * y2);
-        }
-
-        // Final area
-        area = Math.abs(area) / 2.0f;
-
-        // Density (mass per unit area)
-        float density = getMass() / area;
-
-        // Final moment of inertia
-        inertia = Math.abs(inertia) * density / 12.0f;
-        this.inertia = inertia;
-    }
-
+    // Function to draw the shape
     public void draw(PolygonSpriteBatch polygonSpriteBatch, TextureRegion texture){
         polygonSpriteBatch.setColor(this.getColor());
         PolygonRegion region = new PolygonRegion(texture, this.getVerticesArray(), Triangulation.calculateTriangulation(this.getVerticesVector()));

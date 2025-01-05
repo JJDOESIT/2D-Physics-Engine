@@ -4,15 +4,19 @@ import com.badlogic.gdx.math.Vector2;
 
 public class SoftPoint {
     private Vector2 velocity;
-    private Vector2 force;
+    private final Vector2 force;
     private Vector2 origin;
-    float mass;
+    private final float mass;
+    private final boolean moveable;
+    public SoftCollisionInfo softCollisionInfo;
 
-    public SoftPoint(Vector2 origin, float mass){
+    public SoftPoint(Vector2 origin, float mass, boolean moveable){
         this.origin = origin;
         this.mass = mass;
+        this.moveable = moveable;
         this.velocity = new Vector2();
         this.force = new Vector2();
+        this.softCollisionInfo = new SoftCollisionInfo();
     }
 
     public Vector2 getForce(){
@@ -24,17 +28,15 @@ public class SoftPoint {
         this.force.y += force.y;
     }
 
-    public void offsetForce(float fx, float fy){
-        this.force.x += fx;
-        this.force.y += fy;
-    }
-
     public void resetForce(){
         this.force.set(0,0);
     }
 
     public float getInverseMass(){
-        return 1 / this.mass;
+        if (moveable) {
+            return 1 / this.mass;
+        }
+        return 0;
     }
 
     // Offset the velocity
@@ -67,6 +69,11 @@ public class SoftPoint {
         this.origin = origin;
     }
 
+    public void setOrigin(float x, float y){
+        this.origin.x = x;
+        this.origin.y = y;
+    }
+
     public void offsetOrigin(float dx, float dy){
         this.origin.x += dx;
         this.origin.y += dy;
@@ -80,34 +87,16 @@ public class SoftPoint {
         return this.mass;
     }
 
-    public void moveOrigin(Vector2 offset){
+    public void offsetOrigin(Vector2 offset){
         this.origin.x += offset.x;
         this.origin.y += offset.y;
     }
 
-    public void applyGravity(float gravity, float time){
-        this.velocity.y += gravity * time;
+    public void calculateGravity(float gravity){
+        this.force.y += gravity;
     }
 
-    public void integrate(float time){
-        // Calculate the change in velocity (acceleration * time step)
-        float dvx = (this.force.x) / this.mass * time; // Assuming force is already accumulated
-        float dvy = (this.force.y) / this.mass * time; // Assuming force is already accumulated
-
-        // Update velocity using half of the change in velocity (semi-implicit Euler method)
-        this.velocity.x += dvx / 2.0f;
-        this.velocity.y += dvy / 2.0f;
-
-        // Calculate the change in position based on updated velocity
-        double deltaRotationX = this.velocity.x * time;
-        double deltaRotationY = this.velocity.y * time;
-
-        // Update position using the new velocity
-        this.origin.x += (float) deltaRotationX;
-        this.origin.y += (float) deltaRotationY;
-
-        this.force.set(0,0);
-
+    public void calculateResistance(float resistance){
+        this.velocity.scl(resistance);
     }
-
 }

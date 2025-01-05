@@ -7,6 +7,8 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 
+import it.jjdoes.PhysicsEngine.AABB;
+
 public class RigidPolygonShape extends RigidShape implements RigidPolygonShapePhysics {
     Vector2[] localMappedVertices;
     private final int numPoints;

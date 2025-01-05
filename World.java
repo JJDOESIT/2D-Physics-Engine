@@ -17,27 +17,22 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import it.jjdoes.PhysicsEngine.PolygonShapeTypes.Hexagon;
-import it.jjdoes.PhysicsEngine.PolygonShapeTypes.Octagon;
-import it.jjdoes.PhysicsEngine.PolygonShapeTypes.Pentagon;
-import it.jjdoes.PhysicsEngine.PolygonShapeTypes.Square;
-import it.jjdoes.PhysicsEngine.PolygonShapeTypes.Triangle;
+import it.jjdoes.PhysicsEngine.RigidBody.RigidPolygonShapeTypes.RigidHexagon;
+import it.jjdoes.PhysicsEngine.RigidBody.RigidPolygonShapeTypes.RigidOctagon;
+import it.jjdoes.PhysicsEngine.RigidBody.RigidPolygonShapeTypes.RigidPentagon;
+import it.jjdoes.PhysicsEngine.RigidBody.RigidPolygonShapeTypes.RigidSquare;
+import it.jjdoes.PhysicsEngine.RigidBody.RigidPolygonShapeTypes.RigidTriangle;
 import it.jjdoes.PhysicsEngine.RigidBody.RigidCircleShape;
 import it.jjdoes.PhysicsEngine.RigidBody.RigidPolygonShape;
 import it.jjdoes.PhysicsEngine.RigidBody.Quadtree;
 import it.jjdoes.PhysicsEngine.RigidBody.RigidShape;
-import it.jjdoes.PhysicsEngine.RigidBody.SAT;
-import it.jjdoes.PhysicsEngine.SoftBody.SoftCollisionDetection;
-import it.jjdoes.PhysicsEngine.SoftBody.SoftPoint;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShape;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShapeTypes.SoftCircle;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShapeTypes.SoftOctagon;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShapeTypes.SoftSquare;
-import it.jjdoes.PhysicsEngine.SoftBody.Spring;
 
 public class World implements WorldPhysics {
     private static float screenWidth;
@@ -46,6 +41,7 @@ public class World implements WorldPhysics {
     public static ArrayList<RigidShape> rigidShapes;
     public static ArrayList<SoftPolygonShape> softShapes;
     public static int mode = 0;
+    private static int selectedSoftModel = 1;
     private static ArrayList<TextureRegion> textures;
     private static ArrayList<Color> colors;
     public static ArrayList<Vector2> allContactPoints;
@@ -58,12 +54,12 @@ public class World implements WorldPhysics {
     private static boolean selectedStaticOption;
     public static Quadtree quadtree;
     private static boolean usingQuadtree;
-    private static final float e = 0.1f;
+    private static final float rigidE = 0.1f;
+    private static final float softE = 0.9f;
     private static final float gravity = -60f;
     private static final float resistance = 0.999f;
     private static final float staticFriction = 0.2f;
     private static final float dynamicFriction = 0.1f;
-    private static final float springStrength = 1f;
     // Constructor
     public static void initialize(float width, float height, float hHeight, boolean quadtreeBackend){
         screenWidth = width;
@@ -107,10 +103,10 @@ public class World implements WorldPhysics {
     // Function to create the bounding rigid walls
     private static void initializeRigidWalls(){
         // Create the bounding walls
-        RigidPolygonShape topWall = new Square(new Vector2(Math.max(screenWidth, screenHeight) / 2,(screenHeight + Math.max(screenWidth, screenHeight) / 2) - headerHeight), colors.get(0),  Math.max(screenWidth, screenHeight), 45, 0, false);
-        RigidPolygonShape rightWall = new Square(new Vector2(screenWidth + Math.max(screenWidth, screenHeight) / 2,Math.max(screenWidth, screenHeight) / 2), colors.get(0), Math.max(screenWidth, screenHeight), 45, 0, false);
-        RigidPolygonShape bottomWall = new Square(new Vector2(Math.max(screenWidth, screenHeight) / 2,-Math.max(screenWidth, screenHeight) / 2), colors.get(0), Math.max(screenWidth, screenHeight), 45, 0, false);
-        RigidPolygonShape leftWall = new Square(new Vector2(-Math.max(screenWidth, screenHeight) / 2,Math.max(screenWidth, screenHeight) / 2), colors.get(0), Math.max(screenWidth, screenHeight), 45, 0, false);
+        RigidPolygonShape topWall = new RigidSquare(new Vector2(Math.max(screenWidth, screenHeight) / 2,(screenHeight + Math.max(screenWidth, screenHeight) / 2) - headerHeight), colors.get(0),  Math.max(screenWidth, screenHeight), 45, 0, false);
+        RigidPolygonShape rightWall = new RigidSquare(new Vector2(screenWidth + Math.max(screenWidth, screenHeight) / 2,Math.max(screenWidth, screenHeight) / 2), colors.get(0), Math.max(screenWidth, screenHeight), 45, 0, false);
+        RigidPolygonShape bottomWall = new RigidSquare(new Vector2(Math.max(screenWidth, screenHeight) / 2,-Math.max(screenWidth, screenHeight) / 2), colors.get(0), Math.max(screenWidth, screenHeight), 45, 0, false);
+        RigidPolygonShape leftWall = new RigidSquare(new Vector2(-Math.max(screenWidth, screenHeight) / 2,Math.max(screenWidth, screenHeight) / 2), colors.get(0), Math.max(screenWidth, screenHeight), 45, 0, false);
         // Add the walls to the rigidShapes list
         rigidShapes.add(topWall);
         rigidShapes.add(rightWall);
@@ -129,10 +125,10 @@ public class World implements WorldPhysics {
     // Function to create the bounding soft walls
     private static void initializeSoftWalls(){
         // Create the bounding walls
-        SoftPolygonShape topWall = new SoftSquare(new Vector2(Math.max(screenWidth, screenHeight) / 2,(screenHeight + Math.max(screenWidth, screenHeight) / 2) - headerHeight), colors.get(0),  Math.max(screenWidth, screenHeight), 45, 0, false, 1, 1);
-        SoftPolygonShape rightWall = new SoftSquare(new Vector2(screenWidth + Math.max(screenWidth, screenHeight) / 2,Math.max(screenWidth, screenHeight) / 2), colors.get(0), Math.max(screenWidth, screenHeight), 45, 0, false, 1, 1);
-        SoftPolygonShape bottomWall = new SoftSquare(new Vector2(Math.max(screenWidth, screenHeight) / 2,-Math.max(screenWidth, screenHeight) / 2), colors.get(2), Math.max(screenWidth, screenHeight), 45, 0, false, 1, 1);
-        SoftPolygonShape leftWall = new SoftSquare(new Vector2(-Math.max(screenWidth, screenHeight) / 2,Math.max(screenWidth, screenHeight) / 2), colors.get(0), Math.max(screenWidth, screenHeight), 45, 0, false, 1, 1);
+        SoftPolygonShape topWall = new SoftSquare(new Vector2(Math.max(screenWidth, screenHeight) / 2,(screenHeight + Math.max(screenWidth, screenHeight) / 2) - headerHeight), colors.get(0),  Math.max(screenWidth, screenHeight), 45, 0, false, 1);
+        SoftPolygonShape rightWall = new SoftSquare(new Vector2(screenWidth + Math.max(screenWidth, screenHeight) / 2,Math.max(screenWidth, screenHeight) / 2), colors.get(0), Math.max(screenWidth, screenHeight), 45, 0, false, 1);
+        SoftPolygonShape bottomWall = new SoftSquare(new Vector2(Math.max(screenWidth, screenHeight) / 2,-Math.max(screenWidth, screenHeight) / 2), colors.get(2), Math.max(screenWidth, screenHeight), 45, 0, false, 1);
+        SoftPolygonShape leftWall = new SoftSquare(new Vector2(-Math.max(screenWidth, screenHeight) / 2,Math.max(screenWidth, screenHeight) / 2), colors.get(0), Math.max(screenWidth, screenHeight), 45, 0, false, 1);
         // Add the walls to the softShapes list
         softShapes.add(topWall);
         softShapes.add(rightWall);
@@ -142,14 +138,14 @@ public class World implements WorldPhysics {
 
     // Function to create an initial rigid player character
     private static void initializeRigidPlayer(){
-        RigidPolygonShape playerShape = new Square(new Vector2(250,450), colors.get(2), selectedSideLength * 2, selectedCreationRotation, selectedMass * 2, true);
+        RigidPolygonShape playerShape = new RigidSquare(new Vector2(250,450), colors.get(2), selectedSideLength * 2, selectedCreationRotation, selectedMass * 2, true);
         rigidShapes.add(playerShape);
         playerShapeIndex = rigidShapes.size() - 1;
     }
 
     // Function to create an initial soft player character
     private static void initializeSoftPlayer(){
-        SoftPolygonShape playerShape = new SoftOctagon(new Vector2(250,450), colors.get(2), 100, 0, 1, true, 100, springStrength);
+        SoftPolygonShape playerShape = new SoftSquare(new Vector2(250,450), colors.get(2), 100, 0, selectedMass, true, 100);
         playerShape.initializeMatcher();
 
         softShapes.add(playerShape);
@@ -172,8 +168,25 @@ public class World implements WorldPhysics {
             initializeRigidPlayer();
             mode = 0;
         }
+    }
 
-
+    public static void swapSoftModel(){
+        // Swap to pressure model
+        if (selectedSoftModel == 0){
+            for (SoftPolygonShape shape : softShapes){
+                shape.removeInnerSprings();
+            }
+            selectedSoftModel = 1;
+        }
+        // Swap to spring shape-matcher model
+        else if (selectedSoftModel == 1){
+            for (SoftPolygonShape shape : softShapes){
+                if (shape.isMoveable()) {
+                    shape.initializeInnerSprings();
+                }
+            }
+            selectedSoftModel = 0;
+        }
     }
 
     // Function to handle user input
@@ -215,11 +228,11 @@ public class World implements WorldPhysics {
                 shapeDelta.x -= shapeSpeed;
             }
             // Right
-            if (Gdx.input.isKeyJustPressed(Input.Keys.D)) {
+            if (Gdx.input.isKeyPressed(Input.Keys.D)) {
                 shapeDelta.x += shapeSpeed;
             }
 
-            if (Gdx.input.isKeyPressed(Input.Keys.O)) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
                 World.swapMode();
                 return;
             }
@@ -245,6 +258,9 @@ public class World implements WorldPhysics {
             }
             if (Gdx.input.isKeyPressed(Input.Keys.R)) {
                 softShapes.get(playerShapeIndex).rotateAll(-1);
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
+                swapSoftModel();
             }
             if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
                 World.swapMode();
@@ -274,7 +290,7 @@ public class World implements WorldPhysics {
                 // Loop through each shape
                 for (int index = 0; index < rigidShapes.size(); index++) {
                     // If the small circle intersects another shape
-                    if (SAT.checkCollision(mouseShape, rigidShapes.get(index)) != null) {
+                    if (CollisionDetection.checkCollision(mouseShape, rigidShapes.get(index)) != null) {
                         // If the player shape is selected
                         if (playerShapeIndex != -1) {
                             // Set the old selected shape to a random color
@@ -296,23 +312,23 @@ public class World implements WorldPhysics {
 
                 // Triangle
                 if (shapeType.equals("Triangle")) {
-                    shape = new Triangle(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption);
+                    shape = new RigidTriangle(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption);
                 }
                 // Square
                 else if (shapeType.equals("Square")) {
-                    shape = new Square(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption);
+                    shape = new RigidSquare(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption);
                 }
                 // Pentagon
                 else if (shapeType.equals("Pentagon")) {
-                    shape = new Pentagon(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption);
+                    shape = new RigidPentagon(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption);
                 }
                 // Hexagon
                 else if (shapeType.equals("Hexagon")) {
-                    shape = new Hexagon(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption);
+                    shape = new RigidHexagon(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption);
                 }
                 // Octagon
                 else if (shapeType.equals("Octagon")) {
-                    shape = new Octagon(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption);
+                    shape = new RigidOctagon(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption);
                 }
                 // Circle
                 else if (shapeType.equals("Circle")) {
@@ -351,20 +367,25 @@ public class World implements WorldPhysics {
                 Color color = selectedStaticOption ? colors.get(random.nextInt(3, colors.size())) : colors.get(1);
                 // Square
                 if (shapeType.equals("Square")) {
-                    shape = new SoftSquare(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption, selectedSideLength, springStrength);
+                    shape = new SoftSquare(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption, selectedSideLength);
                     shape.initializeMatcher();
                 }
                 else if (shapeType.equals("Octagon")){
-                    shape = new SoftOctagon(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption, selectedSideLength, springStrength);
+                    shape = new SoftOctagon(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption, selectedSideLength);
                     shape.initializeMatcher();
                 }
                 else if (shapeType.equals("Circle")){
-                    shape = new SoftCircle(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption, selectedSideLength, springStrength);
+                    shape = new SoftCircle(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption, selectedSideLength);
                     shape.initializeMatcher();
                 }
 
                 // If the shape was successfully created
                 if (shape != null) {
+                    // If we're using a spring shape-matching model
+                    if (selectedSoftModel == 0){
+                        // Initialize the inner springs
+                        shape.initializeInnerSprings();
+                    }
                     // Add the shape to the list
                     softShapes.add(shape);
                 }
@@ -382,17 +403,17 @@ public class World implements WorldPhysics {
             }
             // Else if NOT using quadtree
             else{
-                step(time, iterations);
+                rigidStep(time, iterations);
             }
         }
         // If the mode is soft
         else if (mode == 1){
-            softStep(time, iterations);
+            softStep(iterations);
         }
     }
 
     // Step through the simulation with rigid bodies
-    private static void step(float time, int iterations){
+    private static void rigidStep(float time, int iterations){
         // Clear contact points
         allContactPoints.clear();
 
@@ -414,12 +435,12 @@ public class World implements WorldPhysics {
                     RigidShape shapeTwo = rigidShapes.get(inner);
 
                     // If there is no overlap on AABB
-                    if (!SAT.checkCollision(shapeOne.getAABB(), shapeTwo.getAABB())){
+                    if (!CollisionDetection.checkCollision(shapeOne.getAABB(), shapeTwo.getAABB())){
                         continue;
                     }
 
                     // Check if two objects are overlapping using SAT
-                    Object[] collisionData = SAT.checkCollision(rigidShapes.get(outer), rigidShapes.get(inner));
+                    Object[] collisionData = CollisionDetection.checkCollision(rigidShapes.get(outer), rigidShapes.get(inner));
                     // If there is no overlap
                     if (collisionData == null) {
                         continue;
@@ -443,7 +464,7 @@ public class World implements WorldPhysics {
                     }
 
                     // Apply the impulse
-                    WorldPhysics.applyImpulseWithRotation(contactNormal, rigidShapes.get(outer), rigidShapes.get(inner), contactPoints, contactCount, e, staticFriction, dynamicFriction);
+                    WorldPhysics.applyImpulseWithRotation(contactNormal, rigidShapes.get(outer), rigidShapes.get(inner), contactPoints, contactCount, rigidE, staticFriction, dynamicFriction);
                 }
             }
             // Loop through all rigidShapes
@@ -508,12 +529,12 @@ public class World implements WorldPhysics {
                     checkedPairs.add(pair);
 
                     // Perform AABB collision check
-                    if (!SAT.checkCollision(shapeOne.getAABB(), shapeTwo.getAABB())) {
+                    if (!CollisionDetection.checkCollision(shapeOne.getAABB(), shapeTwo.getAABB())) {
                         continue;
                     }
 
                     // Perform SAT collision check
-                    Object[] collisionData = SAT.checkCollision(shapeOne, shapeTwo);
+                    Object[] collisionData = CollisionDetection.checkCollision(shapeOne, shapeTwo);
                     if (collisionData == null) {
                         continue;
                     }
@@ -535,7 +556,7 @@ public class World implements WorldPhysics {
                     }
 
                     // Apply the impulse
-                    WorldPhysics.applyImpulseWithRotation(contactNormal, shapeOne, shapeTwo, contactPoints, contactCount, e, staticFriction, dynamicFriction);
+                    WorldPhysics.applyImpulseWithRotation(contactNormal, shapeOne, shapeTwo, contactPoints, contactCount, rigidE, staticFriction, dynamicFriction);
                 }
             }
 
@@ -552,9 +573,18 @@ public class World implements WorldPhysics {
     }
 
     // Step through the simulation with soft bodies
-    private static void softStep(float time, int iterations){
+    private static void softStep(int iterations){
         // Clear contact points
         allContactPoints.clear();
+
+        // Loop through all softShapes
+        for (SoftPolygonShape shape: softShapes) {
+            // If the shape is not static
+            if (shape.isMoveable()) {
+                // Apply resistance (simulated wind/friction)
+                shape.calculateResistance(resistance);
+            }
+        }
 
         // Split the move, collide, separate process into iterations
         for (int iteration = 0; iteration < iterations; iteration++){
@@ -564,13 +594,23 @@ public class World implements WorldPhysics {
                 if (shape.isMoveable()) {
                     // Set the time step
                     float timeStep = 0.01f;
-                    // Calculate matcher forces
-                    shape.getMatcher().moveAll(shape.getOrigin().sub(shape.getMatcher().getOrigin()));
-                    shape.getMatcher().rotateAll(shape.getAngle(shape.getMatcher()) * -1);
-                    shape.getMatcher().calculateSpringForce(2500, 0);
+
+                    // If we're in spring matcher mode
+                    if (selectedSoftModel == 0) {
+                        // Calculate matcher forces
+                        shape.getMatcher().offsetAll(shape.getOrigin().sub(shape.getMatcher().getOrigin()));
+                        shape.getMatcher().rotateAll(shape.getAngle(shape.getMatcher()) * -1);
+                        shape.getMatcher().calculateSpringForce(500, 0);
+                    }
                     // Calculate shape forces
-                    shape.calculateSpringForce(2500, 35);
-                    shape.calculatePressure(700000);
+                    shape.calculateGravity(selectedGravity * gravity);
+                    shape.calculateSpringForce(500, 35);
+
+                    // If we're in pressure mode
+                    if (selectedSoftModel == 1) {
+                        // Calculate pressure
+                        shape.calculatePressure(25_000);
+                    }
 
                     // Part one integration
                     Object[] savedIntegrationData = shape.integratePartOne(timeStep);
@@ -578,8 +618,13 @@ public class World implements WorldPhysics {
                     ArrayList<Vector2> savedVelocities = (ArrayList<Vector2>) savedIntegrationData[1];
 
                     // Recalculate forces
-                    shape.calculateSpringForce(2500, 35);
-                    shape.calculatePressure(700000);
+                    shape.calculateGravity(selectedGravity * gravity);
+                    shape.calculateSpringForce(500, 35);
+
+                    // If we're in pressure mode
+                    if (selectedSoftModel == 1) {
+                        shape.calculatePressure(25_000);
+                    }
 
                     // Part two integration
                     shape.integratePartTwo(savedForces, savedVelocities, timeStep);
@@ -587,9 +632,9 @@ public class World implements WorldPhysics {
             }
             // Loop through the polygon softShapes
             for (int outer = 0; outer < softShapes.size() - 1; outer++){
+                SoftPolygonShape shapeOne = softShapes.get(outer);
                 for (int inner = outer + 1; inner < softShapes.size(); inner++) {
                     // Declare shapeOne and shapeTwo
-                    SoftPolygonShape shapeOne = softShapes.get(outer);
                     SoftPolygonShape shapeTwo = softShapes.get(inner);
 
 //                    // If there is no overlap on AABB
@@ -598,17 +643,11 @@ public class World implements WorldPhysics {
 //                    }
 
                     // Check if two objects are overlapping
-                    Object[] collisionData = SoftCollisionDetection.checkCollision(shapeOne, shapeTwo);
-                    if (collisionData == null){
-                        continue;
-                    }
-                    boolean collision = (boolean) collisionData[0];
-                    // If there is no overlap
-                    if (!collision) {
-                        continue;
-                    }
+                    CollisionDetection.checkCollision(shapeOne, shapeTwo);
+
                     // Displace the softShapes
-                    //WorldPhysics.resolveCollision(shapeOne, shapeTwo, (ArrayList<Float>) collisionData[1], (Vector2) collisionData[2], (ArrayList<Integer>) collisionData[3], (ArrayList<Integer>) collisionData[4], (ArrayList<Integer>) collisionData[5], (ArrayList<Integer>) collisionData[6], (float) collisionData[7]);
+                    WorldPhysics.handleDisplacement(shapeOne, shapeTwo, softE);
+                    WorldPhysics.handleDisplacement(shapeTwo, shapeOne, softE);
                 }
             }
         }
@@ -716,7 +755,7 @@ public class World implements WorldPhysics {
             shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
             for (SoftPolygonShape shape : softShapes){
                 shapeRenderer.setColor(Color.BLACK);
-                Vector2[][] springs = shape.getSpringVectors();
+                Vector2[][] springs = shape.getSpringsEdges();
                 for (Vector2[] spring : springs){
                     shapeRenderer.line(spring[0], spring[1]);
                 }

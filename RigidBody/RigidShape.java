@@ -3,6 +3,8 @@ package it.jjdoes.PhysicsEngine.RigidBody;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Vector2;
 
+import it.jjdoes.PhysicsEngine.AABB;
+
 public class RigidShape implements RigidShapePhysics {
     private final int type;
     private Vector2 origin;

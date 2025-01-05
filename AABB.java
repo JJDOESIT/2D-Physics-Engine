@@ -1,4 +1,4 @@
-package it.jjdoes.PhysicsEngine.RigidBody;
+package it.jjdoes.PhysicsEngine;
 
 import com.badlogic.gdx.math.Vector2;
 
