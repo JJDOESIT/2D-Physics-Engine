@@ -16,13 +16,15 @@ public class SoftSquare extends SoftPolygonShape {
 
     @Override
     public void initializeInnerSprings(){
+        int springStep = 2;
+
         ArrayList<SoftPoint> points = super.getPoints();
         ArrayList<SoftPoint> desiredPoints = super.getMatcher().getPoints();
+        int numberOfPoints = points.size();
 
-        Spring spring1 = new Spring(points.get(0), points.get(2), desiredPoints.get(0).getOrigin().dst(desiredPoints.get(2).getOrigin()));
-        Spring spring2 = new Spring(points.get(1), points.get(3), desiredPoints.get(1).getOrigin().dst(desiredPoints.get(3).getOrigin()));
-
-        super.addSpring(spring1);
-        super.addSpring(spring2);
+        for (int index = 0; index < numberOfPoints; index++){
+            Spring spring = new Spring(points.get(index), points.get((index + springStep) % numberOfPoints), desiredPoints.get(index).getOrigin().dst(desiredPoints.get((index + springStep) % numberOfPoints).getOrigin()));
+            super.addSpring(spring);
+        }
     }
 }

@@ -15,31 +15,16 @@ public class SoftOctagon extends SoftPolygonShape {
     }
 
     @Override
-    // Initialize inner springs
     public void initializeInnerSprings(){
+        int springStep = 3;
+
         ArrayList<SoftPoint> points = super.getPoints();
         ArrayList<SoftPoint> desiredPoints = super.getMatcher().getPoints();
+        int numberOfPoints = points.size();
 
-        Spring spring1 = new Spring(points.get(0), points.get(2), desiredPoints.get(0).getOrigin().dst(desiredPoints.get(2).getOrigin()));
-        Spring spring2 = new Spring(points.get(1), points.get(3), desiredPoints.get(1).getOrigin().dst(desiredPoints.get(3).getOrigin()));
-        Spring spring3 = new Spring(points.get(2), points.get(4), desiredPoints.get(2).getOrigin().dst(desiredPoints.get(4).getOrigin()));
-        Spring spring4 = new Spring(points.get(3), points.get(5), desiredPoints.get(3).getOrigin().dst(desiredPoints.get(5).getOrigin()));
-        Spring spring5 = new Spring(points.get(4), points.get(6), desiredPoints.get(4).getOrigin().dst(desiredPoints.get(6).getOrigin()));
-        Spring spring6 = new Spring(points.get(5), points.get(7), desiredPoints.get(5).getOrigin().dst(desiredPoints.get(7).getOrigin()));
-        Spring spring7 = new Spring(points.get(6), points.get(0), desiredPoints.get(6).getOrigin().dst(desiredPoints.get(0).getOrigin()));
-        Spring spring8 = new Spring(points.get(7), points.get(1), desiredPoints.get(7).getOrigin().dst(desiredPoints.get(1).getOrigin()));
-        Spring spring9 = new Spring(points.get(0), points.get(4), desiredPoints.get(0).getOrigin().dst(desiredPoints.get(4).getOrigin()));
-        Spring spring10 = new Spring(points.get(6), points.get(2), desiredPoints.get(6).getOrigin().dst(desiredPoints.get(2).getOrigin()));
-
-        super.addSpring(spring1);
-        super.addSpring(spring2);
-        super.addSpring(spring3);
-        super.addSpring(spring4);
-        super.addSpring(spring5);
-        super.addSpring(spring6);
-        super.addSpring(spring7);
-        super.addSpring(spring8);
-        super.addSpring(spring9);
-        super.addSpring(spring10);
+        for (int index = 0; index < numberOfPoints; index++){
+            Spring spring = new Spring(points.get(index), points.get((index + springStep) % numberOfPoints), desiredPoints.get(index).getOrigin().dst(desiredPoints.get((index + springStep) % numberOfPoints).getOrigin()));
+            super.addSpring(spring);
+        }
     }
 }

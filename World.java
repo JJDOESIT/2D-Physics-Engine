@@ -29,10 +29,12 @@ import it.jjdoes.PhysicsEngine.RigidBody.RigidCircleShape;
 import it.jjdoes.PhysicsEngine.RigidBody.RigidPolygonShape;
 import it.jjdoes.PhysicsEngine.RigidBody.Quadtree;
 import it.jjdoes.PhysicsEngine.RigidBody.RigidShape;
+import it.jjdoes.PhysicsEngine.SoftBody.SoftPoint;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShape;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShapeTypes.SoftCircle;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShapeTypes.SoftOctagon;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShapeTypes.SoftSquare;
+import sun.security.provider.SHA;
 
 public class World implements WorldPhysics {
     private static float screenWidth;
@@ -54,6 +56,7 @@ public class World implements WorldPhysics {
     private static boolean selectedStaticOption;
     public static Quadtree quadtree;
     private static boolean usingQuadtree;
+    private static boolean drawContactPoints = false;
     private static final float rigidE = 0.1f;
     private static final float softE = 0.9f;
     private static final float gravity = -60f;
@@ -197,6 +200,35 @@ public class World implements WorldPhysics {
 
     // Function to handle keyboard input from the user
     private static void handleKeyboardInput(){
+        // If the user presses WASD
+        float shapeSpeed = 25.0f; // Player speed
+        Vector2 shapeDelta = new Vector2(0f, 0f);
+        // Up
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+            shapeDelta.y += shapeSpeed;
+        }
+        // Down
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+            shapeDelta.y -= shapeSpeed;
+        }
+        // Left
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+            shapeDelta.x -= shapeSpeed;
+        }
+        // Right
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+            shapeDelta.x += shapeSpeed;
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.C)){
+            drawContactPoints = !drawContactPoints;
+        }
+        // Swap from rigid to soft or from soft to rigid
+        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
+            World.swapMode();
+            return;
+        }
+
+        // Rigid mode
         if (mode == 0) {
             // If the user presses tab
             if (Gdx.input.isKeyJustPressed(Input.Keys.TAB)) {
@@ -207,33 +239,8 @@ public class World implements WorldPhysics {
                     playerShapeIndex = -1;
                 }
             }
-
             // If no player shape is selected
             if (playerShapeIndex == -1) {
-                return;
-            }
-            // If the user presses WASD
-            float shapeSpeed = 25.0f; // Player speed
-            Vector2 shapeDelta = new Vector2(0f, 0f);
-            // Up
-            if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-                shapeDelta.y += shapeSpeed;
-            }
-            // Down
-            if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-                shapeDelta.y -= shapeSpeed;
-            }
-            // Left
-            if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-                shapeDelta.x -= shapeSpeed;
-            }
-            // Right
-            if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-                shapeDelta.x += shapeSpeed;
-            }
-
-            if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
-                World.swapMode();
                 return;
             }
             // Fetch the player shape
@@ -241,30 +248,15 @@ public class World implements WorldPhysics {
             // Update velocity
             playerShape.setVelocity(playerShape.getVelocity().add(shapeDelta));
         }
+        // Soft mode
         else if (mode == 1){
-            float shapeSpeed = 25f; // Player speed
-            Vector2 shapeDelta = new Vector2(0f, 0f);
-            if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-                shapeDelta.y += shapeSpeed;
-            }
-            if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-                shapeDelta.y -= shapeSpeed;
-            }
-            if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-                shapeDelta.x -= shapeSpeed;
-            }
-            if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-                shapeDelta.x += shapeSpeed;
-            }
+            // Rotate the shape
             if (Gdx.input.isKeyPressed(Input.Keys.R)) {
                 softShapes.get(playerShapeIndex).rotateAll(-1);
             }
+            // Swap soft model mode
             if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
                 swapSoftModel();
-            }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
-                World.swapMode();
-                return;
             }
             softShapes.get(playerShapeIndex).offsetVelocity(shapeDelta);
         }
@@ -399,7 +391,7 @@ public class World implements WorldPhysics {
         if (mode == 0){
             // If using quadtree
             if (usingQuadtree){
-                stepWithQuadtree(time, iterations);
+                rigidStepWithQuadtree(time, iterations);
             }
             // Else if NOT using quadtree
             else{
@@ -408,7 +400,7 @@ public class World implements WorldPhysics {
         }
         // If the mode is soft
         else if (mode == 1){
-            softStep(iterations);
+            softStep(time, iterations);
         }
     }
 
@@ -481,7 +473,7 @@ public class World implements WorldPhysics {
     }
 
     // Step through the simulation using a quadtree
-    private static void stepWithQuadtree(float time, int iterations) {
+    private static void rigidStepWithQuadtree(float time, int iterations) {
         // Clear quadtree and contact points
         quadtree.clear();
         allContactPoints.clear();
@@ -573,7 +565,7 @@ public class World implements WorldPhysics {
     }
 
     // Step through the simulation with soft bodies
-    private static void softStep(int iterations){
+    private static void softStep(float time, int iterations){
         // Clear contact points
         allContactPoints.clear();
 
@@ -593,7 +585,7 @@ public class World implements WorldPhysics {
                 // If the shape is not static
                 if (shape.isMoveable()) {
                     // Set the time step
-                    float timeStep = 0.01f;
+                    float timeStep = time / iterations;
 
                     // If we're in spring matcher mode
                     if (selectedSoftModel == 0) {
@@ -603,7 +595,7 @@ public class World implements WorldPhysics {
                         shape.getMatcher().calculateSpringForce(500, 0);
                     }
                     // Calculate shape forces
-                    shape.calculateGravity(selectedGravity * gravity);
+                    //shape.calculateGravity(selectedGravity * gravity);
                     shape.calculateSpringForce(500, 35);
 
                     // If we're in pressure mode
@@ -618,7 +610,7 @@ public class World implements WorldPhysics {
                     ArrayList<Vector2> savedVelocities = (ArrayList<Vector2>) savedIntegrationData[1];
 
                     // Recalculate forces
-                    shape.calculateGravity(selectedGravity * gravity);
+                    //shape.calculateGravity(selectedGravity * gravity);
                     shape.calculateSpringForce(500, 35);
 
                     // If we're in pressure mode
@@ -646,8 +638,8 @@ public class World implements WorldPhysics {
                     CollisionDetection.checkCollision(shapeOne, shapeTwo);
 
                     // Displace the softShapes
-                    WorldPhysics.handleDisplacement(shapeOne, shapeTwo, softE);
-                    WorldPhysics.handleDisplacement(shapeTwo, shapeOne, softE);
+//                    WorldPhysics.handleCollision(shapeOne, shapeTwo, softE, staticFriction, dynamicFriction);
+//                    WorldPhysics.handleCollision(shapeTwo, shapeOne, softE, staticFriction, dynamicFriction);
                 }
             }
         }
@@ -752,34 +744,36 @@ public class World implements WorldPhysics {
             shapeRenderer.end();
         }
         else if (mode == 1){
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
             for (SoftPolygonShape shape : softShapes){
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
                 shapeRenderer.setColor(Color.BLACK);
                 Vector2[][] springs = shape.getSpringsEdges();
                 for (Vector2[] spring : springs){
                     shapeRenderer.line(spring[0], spring[1]);
                 }
-
-                if (shape.getMatcher() == null){
-                    continue;
+                for (Vector2 vertex : shape.getVerticesVector()){
+                    shapeRenderer.circle(vertex.x, vertex.y, 6);
                 }
-//                for (SoftPoint softPoint : shape.getMatcher().getPoints()){
-//                    shapeRenderer.circle(softPoint.getOrigin().x, softPoint.getOrigin().y, 5);
-//                }
-//                for (Vector2[] matcherSprings : shape.getMatcher().getSpringVectors()){
-//                    shapeRenderer.line(matcherSprings[0], matcherSprings[1]);
-//                }
+                shapeRenderer.end();
 
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                shapeRenderer.setColor(shape.getColor());
+                for (Vector2 vertex : shape.getVerticesVector()){
+                    shapeRenderer.circle(vertex.x, vertex.y, 5);
+                }
+                shapeRenderer.end();
+            }
+        }
+
+        // If we want to draw the contact points
+        if (drawContactPoints) {
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            // Draw the contact points
+            shapeRenderer.setColor(Color.BLUE);
+            for (Vector2 cp : allContactPoints) {
+                shapeRenderer.circle(cp.x, cp.y, 5);
             }
             shapeRenderer.end();
         }
-
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        // Draw the contact points
-        shapeRenderer.setColor(Color.BLUE);
-        for (Vector2 cp: allContactPoints){
-            shapeRenderer.circle(cp.x, cp.y, 5);
-        }
-        shapeRenderer.end();
     }
 }

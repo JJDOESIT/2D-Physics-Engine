@@ -32,37 +32,8 @@ public interface WorldPhysics {
         }
     }
 
-    public static void handleRigidCollision(SoftPolygonShape shape, float width, float height) {
-        for (SoftPoint softPoint : shape.getPoints()) {
-            Vector2 origin = softPoint.getOrigin();
-            Vector2 velcotiy = softPoint.getVelocity();
-            // collision with ground
-            if (origin.y <= 0) {
-                softPoint.setOrigin(origin.x, 0);
-                softPoint.setVelocity(velcotiy.x, 0);
-            }
-            // collision with ceiling
-            if (origin.y >= height) {
-                softPoint.setOrigin(origin.x, height);
-                softPoint.setVelocity(velcotiy.x, 0);
-            }
-
-            // collision with left wall
-            if (origin.x <= 0) {
-                softPoint.setOrigin(0, origin.y);
-                softPoint.setVelocity(0, velcotiy.y);
-            }
-
-            // collision with right wall
-            if (origin.x >= width) {
-                softPoint.setOrigin(width, origin.y);
-                softPoint.setVelocity(0, velcotiy.y);
-            }
-        }
-    }
-
     // Helper method to handle displacement logic for both shapes
-    public static void handleDisplacement(SoftPolygonShape shapeOne, SoftPolygonShape shapeTwo, float e) {
+    public static void handleCollision(SoftPolygonShape shapeOne, SoftPolygonShape shapeTwo, float e, float staticFriction, float dynamicFriction) {
         ArrayList<SoftPoint> points = shapeOne.getPoints();
         ArrayList<SoftPoint> otherPoints = shapeTwo.getPoints();
 
@@ -115,7 +86,7 @@ public interface WorldPhysics {
                 // If shape one OR shape two is moveable
                 if (shapeOne.isMoveable() || shapeTwo.isMoveable()) {
                     // Apply an impulse
-                    applyImpulse(softPoint, otherPoints, otherEdgeIndexStart, otherEdgeIndexEnd, normal, e, pointStartPercentage, pointEndPercentage);
+                    applyImpulse(softPoint, otherPoints, otherEdgeIndexStart, otherEdgeIndexEnd, normal, pointStartPercentage, pointEndPercentage, e, staticFriction, dynamicFriction);
                 }
 
                 // Update the collision info
@@ -125,7 +96,7 @@ public interface WorldPhysics {
     }
 
     // Apply an impulse to the penetrating vertex, and the respective edge
-    public static void applyImpulse(SoftPoint softPoint, ArrayList<SoftPoint> otherPoints, int otherEdgeIndexStart, int otherEdgeIndexEnd, Vector2 normal, float e, float pointStartPercentage, float pointEndPercentage){
+    public static void applyImpulse(SoftPoint softPoint, ArrayList<SoftPoint> otherPoints, int otherEdgeIndexStart, int otherEdgeIndexEnd, Vector2 normal, float pointStartPercentage, float pointEndPercentage, float e, float staticFriction, float dynamicFriction){
         // An impulse should be applied the both vertices of the respective edge
         // Fetch the edge points
         SoftPoint otherPointStart = otherPoints.get(otherEdgeIndexStart);
@@ -136,13 +107,18 @@ public interface WorldPhysics {
         edgeVelocity.scl(0.5f);
 
         // Calculate relative velocity
-        Vector2 relativeVelocity = softPoint.getVelocity().sub(edgeVelocity);
+        Vector2 relativeVelocity = edgeVelocity.cpy().sub(softPoint.getVelocity());
+
+        // Objects are separating, no impulse needed
+        if (relativeVelocity.dot(normal) >= 0) {
+            return;
+        }
 
         // Calculate the average edge inverse mass
         float edgeInverseMass = (otherPointStart.getInverseMass() + otherPointEnd.getInverseMass()) / 2;
 
         // Compute j value
-        float j = 2 * relativeVelocity.dot(normal);
+        float j = -2 * relativeVelocity.dot(normal);
         j /= (edgeInverseMass + softPoint.getInverseMass());
 
         // Handle NaN case
@@ -153,15 +129,46 @@ public interface WorldPhysics {
         // Impulse vector
         Vector2 impulse = normal.cpy().scl(j);
 
+        // Scale the impulse based on the elasticity
+        impulse.scl(e);
+
         // Update velocities of the three points
         softPoint.offsetVelocity(impulse.cpy().scl(-1 * softPoint.getInverseMass()));
         otherPointStart.offsetVelocity(impulse.cpy().scl(otherPointStart.getInverseMass() * pointEndPercentage));
         otherPointEnd.offsetVelocity(impulse.cpy().scl(otherPointEnd.getInverseMass() * pointStartPercentage));
 
-        // Scale the velocities based off the elasticity value
-        softPoint.setVelocity(softPoint.getVelocity().scl(e));
-        otherPointStart.setVelocity(otherPointStart.getVelocity().scl(e));
-        otherPointEnd.setVelocity(otherPointEnd.getVelocity().scl(e));
+        /* FRICTION */
+
+        // Calculate the tangent
+        Vector2 tangent = relativeVelocity.cpy().sub(normal.scl(relativeVelocity.dot(normal)));
+
+        // Skip
+        if (vectorEqualityCheck(tangent, new Vector2(0,0))){
+            return;
+        }
+
+        // Normalize the tangent
+        tangent.nor();
+
+        // Compute tangent impulse scalar (jt)
+        float jt = -relativeVelocity.dot(tangent);
+        jt /= (edgeInverseMass + softPoint.getInverseMass());
+
+        // Friction impulse vector
+        Vector2 frictionImpulse;
+        float sf = (staticFriction + staticFriction) / 2;
+        float df = (dynamicFriction + dynamicFriction) / 2;
+        if (Math.abs(jt) <= j * sf){
+            frictionImpulse = tangent.scl(jt);
+        }
+        else{
+            frictionImpulse = tangent.scl(-j * df);
+        }
+
+        // Apply friction impulse to velocities
+        softPoint.offsetVelocity(frictionImpulse.cpy().scl(-1 * softPoint.getInverseMass()));
+        otherPointStart.offsetVelocity(frictionImpulse.cpy().scl(otherPointStart.getInverseMass() * pointEndPercentage));
+        otherPointEnd.offsetVelocity(frictionImpulse.cpy().scl(otherPointEnd.getInverseMass() * pointStartPercentage));
     }
 
     // Function to apply an impulse on two rigid shapes

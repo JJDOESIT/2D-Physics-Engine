@@ -451,7 +451,7 @@ public class CollisionDetection {
             Vector2 edgeNormal = ((Vector2) closestPointOnEdgeData[2]).nor();
 
             // If the edge is close to perpendicular to the normal
-            if (normal.dot(edgeNormal) >= 0.7 || normal.dot(edgeNormal) <= -0.7 ){
+            if (normal.dot(edgeNormal)  >= 0 ){
                 // If the point is closer than the previous saved point
                 if (distance < closestAway){
                     closestAway = distance;

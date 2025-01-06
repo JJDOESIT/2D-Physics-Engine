@@ -55,7 +55,7 @@ public class Main implements ApplicationListener {
     }
 
     private void logic() {
-        World.logic(Gdx.graphics.getDeltaTime(), 1);
+        World.logic(Gdx.graphics.getDeltaTime(), 8);
     }
 
     private void draw(){
