@@ -375,6 +375,16 @@ public class CollisionDetection {
             normal.scl(-1);
         }
 
+        // Dislodge the shapes
+        if (depth > 10){
+            System.out.println("DISLODGE");
+            shapeOne.dislodge = true;
+            shapeOne.dislogeAmount.set(normal.cpy().scl(-depth / 2));
+            shapeTwo.dislodge = true;
+            shapeTwo.dislogeAmount.set(normal.scl(depth / 2));
+            return;
+        }
+
         /* RAY CASTING */
 
         // Fetch the edges of both shapes
@@ -450,8 +460,9 @@ public class CollisionDetection {
             Vector2 closestPoint = (Vector2) closestPointOnEdgeData[1];
             Vector2 edgeNormal = ((Vector2) closestPointOnEdgeData[2]).nor();
 
+            //System.out.println("DOT: " + normal.dot(edgeNormal) + ", DEPTH: " + distance + ", NORMAL: " + normal + ", EDGE NORMAL: " + edgeNormal);
             // If the edge is close to perpendicular to the normal
-            if (normal.dot(edgeNormal)  >= 0 ){
+            if (normal.dot(edgeNormal) >= 0.7 || normal.dot(edgeNormal) <= -0.7){
                 // If the point is closer than the previous saved point
                 if (distance < closestAway){
                     closestAway = distance;
@@ -481,6 +492,7 @@ public class CollisionDetection {
             shapeOne.getPoints().get(vertexIndex).softCollisionInfo.setClosestPoint(closestPointSame);
             shapeOne.getPoints().get(vertexIndex).softCollisionInfo.setOtherEdge(otherEdgeIndexSame);
             World.allContactPoints.add(closestPointSame);
+            //System.out.println("FINAL: DOT: " + normal.dot(closestNormalSame) + ", DEPTH: " + closestSame);
         }
         // Else choose the closest edge in the desired direction
         else
@@ -490,7 +502,9 @@ public class CollisionDetection {
             shapeOne.getPoints().get(vertexIndex).softCollisionInfo.setClosestPoint(closestPointAway);
             shapeOne.getPoints().get(vertexIndex).softCollisionInfo.setOtherEdge(otherEdgeIndexAway);
             World.allContactPoints.add(closestPointAway);
+            //System.out.println("FINAL: DOT: " + normal.dot(closestNormalAway) + ", DEPTH: " + closestAway);
         }
+        //System.out.println("\n");
     }
 
     // Project the vertices of a polygon onto an axis, and return the min and max values

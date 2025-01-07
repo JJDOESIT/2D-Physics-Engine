@@ -24,6 +24,8 @@ public class SoftPolygonShape {
     private final ArrayList<SoftPoint> points;
     private final ArrayList<Spring> springs;
     private SoftPolygonShape matcher;
+    public boolean dislodge = false;
+    public Vector2 dislogeAmount = new Vector2();
 
     // Constructor
     public SoftPolygonShape(Vector2 origin, Color color, int numPoints, float sideLength, float step, float creationRotation, float mass, boolean moveable, float springLength){

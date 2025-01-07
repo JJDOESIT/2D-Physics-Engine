@@ -37,6 +37,17 @@ public interface WorldPhysics {
         ArrayList<SoftPoint> points = shapeOne.getPoints();
         ArrayList<SoftPoint> otherPoints = shapeTwo.getPoints();
 
+        // If shape one AND shape two are moveable
+        if (shapeOne.isMoveable() && shapeTwo.isMoveable()) {
+            if (shapeOne.dislodge) {
+                System.out.println(shapeOne.dislogeAmount);
+                shapeOne.offsetAll(shapeOne.dislogeAmount);
+                shapeOne.dislodge = false;
+
+                return;
+            }
+        }
+
         // Loop through each point in shape one
         for (SoftPoint softPoint : points) {
             if (softPoint.softCollisionInfo.getUpdate()) {

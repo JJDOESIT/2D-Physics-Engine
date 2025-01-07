@@ -595,13 +595,13 @@ public class World implements WorldPhysics {
                         shape.getMatcher().calculateSpringForce(500, 0);
                     }
                     // Calculate shape forces
-                    //shape.calculateGravity(selectedGravity * gravity);
+                    shape.calculateGravity(selectedGravity * gravity);
                     shape.calculateSpringForce(500, 35);
 
                     // If we're in pressure mode
                     if (selectedSoftModel == 1) {
                         // Calculate pressure
-                        shape.calculatePressure(25_000);
+                        shape.calculatePressure(15_000);
                     }
 
                     // Part one integration
@@ -610,12 +610,12 @@ public class World implements WorldPhysics {
                     ArrayList<Vector2> savedVelocities = (ArrayList<Vector2>) savedIntegrationData[1];
 
                     // Recalculate forces
-                    //shape.calculateGravity(selectedGravity * gravity);
+                    shape.calculateGravity(selectedGravity * gravity);
                     shape.calculateSpringForce(500, 35);
 
                     // If we're in pressure mode
                     if (selectedSoftModel == 1) {
-                        shape.calculatePressure(25_000);
+                        shape.calculatePressure(15_000);
                     }
 
                     // Part two integration
@@ -638,8 +638,8 @@ public class World implements WorldPhysics {
                     CollisionDetection.checkCollision(shapeOne, shapeTwo);
 
                     // Displace the softShapes
-//                    WorldPhysics.handleCollision(shapeOne, shapeTwo, softE, staticFriction, dynamicFriction);
-//                    WorldPhysics.handleCollision(shapeTwo, shapeOne, softE, staticFriction, dynamicFriction);
+                    WorldPhysics.handleCollision(shapeOne, shapeTwo, softE, staticFriction, dynamicFriction);
+                    WorldPhysics.handleCollision(shapeTwo, shapeOne, softE, staticFriction, dynamicFriction);
                 }
             }
         }
@@ -752,14 +752,14 @@ public class World implements WorldPhysics {
                     shapeRenderer.line(spring[0], spring[1]);
                 }
                 for (Vector2 vertex : shape.getVerticesVector()){
-                    shapeRenderer.circle(vertex.x, vertex.y, 6);
+                    shapeRenderer.circle(vertex.x, vertex.y, 3);
                 }
                 shapeRenderer.end();
 
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
                 shapeRenderer.setColor(shape.getColor());
                 for (Vector2 vertex : shape.getVerticesVector()){
-                    shapeRenderer.circle(vertex.x, vertex.y, 5);
+                    shapeRenderer.circle(vertex.x, vertex.y, 2);
                 }
                 shapeRenderer.end();
             }
