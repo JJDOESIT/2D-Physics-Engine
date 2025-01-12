@@ -637,9 +637,6 @@ public class World implements WorldPhysics {
             for (SoftPolygonShape shape: softShapes) {
                 // If the shape is not static
                 if (shape.isMoveable()) {
-                    // Set the time step
-                    float timeStep = time / iterations;
-
                     // If we're in spring matcher mode
                     if (selectedSoftModel == 0) {
                         // Calculate matcher forces
@@ -658,7 +655,7 @@ public class World implements WorldPhysics {
                     }
 
                     // Part one integration
-                    Object[] savedIntegrationData = shape.integratePartOne(timeStep);
+                    Object[] savedIntegrationData = shape.integratePartOne(time / iterations);
                     ArrayList<Vector2> savedForces = (ArrayList<Vector2>) savedIntegrationData[0];
                     ArrayList<Vector2> savedVelocities = (ArrayList<Vector2>) savedIntegrationData[1];
 
@@ -672,14 +669,15 @@ public class World implements WorldPhysics {
                     }
 
                     // Part two integration
-                    shape.integratePartTwo(savedForces, savedVelocities, timeStep);
+                    shape.integratePartTwo(savedForces, savedVelocities, time / iterations);
                 }
             }
             // Loop through the polygon softShapes
             for (int outer = 0; outer < softShapes.size() - 1; outer++){
+                // Declare shapeOne
                 SoftPolygonShape shapeOne = softShapes.get(outer);
                 for (int inner = outer + 1; inner < softShapes.size(); inner++) {
-                    // Declare shapeOne and shapeTwo
+                    // Declare shapeTwo
                     SoftPolygonShape shapeTwo = softShapes.get(inner);
 
                     // If there is no overlap on AABB
