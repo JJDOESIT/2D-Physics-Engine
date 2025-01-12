@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.PolygonRegion;
 import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 
@@ -166,10 +167,13 @@ public class RigidPolygonShape extends RigidShape implements RigidPolygonShapePh
         super.setInertia(inertia);
     }
 
+    @Override
     // Draw function
-    public void draw(PolygonSpriteBatch polygonSpriteBatch, TextureRegion texture){
+    public void draw(PolygonSpriteBatch polygonSpriteBatch, ShapeRenderer shapeRenderer, TextureRegion texture){
+        polygonSpriteBatch.begin();
         polygonSpriteBatch.setColor(super.getColor());
         PolygonRegion region = new PolygonRegion(texture, this.getVerticesArray(), Triangulation.calculateTriangulation(this.getVerticesVector()));
         polygonSpriteBatch.draw(region, 0, 0);
+        polygonSpriteBatch.end();
     }
 }

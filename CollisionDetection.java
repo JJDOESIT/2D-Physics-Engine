@@ -273,7 +273,7 @@ public class CollisionDetection {
     }
 
     // Function to determine whether two shapes are colliding between two soft polygon shapes
-    public static void checkCollision(SoftPolygonShape shapeOne, SoftPolygonShape shapeTwo) {
+    public static boolean checkCollision(SoftPolygonShape shapeOne, SoftPolygonShape shapeTwo) {
         /* SAT */
 
         // Get vertices for each shape
@@ -307,11 +307,11 @@ public class CollisionDetection {
 
             // Check for separation on the left normal
             if (leftNormalShapeOneMinMax[0] >= leftNormalShapeTwoMinMax[1] || leftNormalShapeTwoMinMax[0] >= leftNormalShapeOneMinMax[1]) {
-                return;
+                return false;
             }
             // Check for separation on the right normal
             if (rightNormalShapeOneMinMax[0] >= rightNormalShapeTwoMinMax[1] || rightNormalShapeTwoMinMax[0] >= rightNormalShapeOneMinMax[1]) {
-                return;
+                return false;
             }
 
             // Find the minimum penetration distance of the left normal
@@ -347,11 +347,11 @@ public class CollisionDetection {
 
             // Check for separation on the left normal
             if (leftNormalShapeOneMinMax[0] >= leftNormalShapeTwoMinMax[1] || leftNormalShapeTwoMinMax[0] >= leftNormalShapeOneMinMax[1]) {
-                return;
+                return false;
             }
             // Check for separation on the right normal
             if (rightNormalShapeOneMinMax[0] >= rightNormalShapeTwoMinMax[1] || rightNormalShapeTwoMinMax[0] >= rightNormalShapeOneMinMax[1]) {
-                return;
+                return false;
             }
 
             // Find the minimum penetration distance of the left normal
@@ -375,14 +375,30 @@ public class CollisionDetection {
             normal.scl(-1);
         }
 
-        // Dislodge the shapes
-        if (depth > 10){
-            System.out.println("DISLODGE");
-            shapeOne.dislodge = true;
-            shapeOne.dislogeAmount.set(normal.cpy().scl(-depth / 2));
-            shapeTwo.dislodge = true;
-            shapeTwo.dislogeAmount.set(normal.scl(depth / 2));
-            return;
+        // If one shape completely penetrates the other
+        float maxShapeRadius = Math.max(shapeOne.getRadius(), shapeTwo.getRadius());
+        if (depth >= maxShapeRadius){
+            // If both shapes are moveable
+            if (shapeOne.isMoveable() && shapeTwo.isMoveable()) {
+                // Dislodge both by half the depth
+                shapeOne.setDislodged(true);
+                shapeTwo.setDislodged(true);
+                shapeOne.setDislodgeAmount(normal.cpy().scl(-depth / 2));
+                shapeTwo.setDislodgeAmount(normal.scl(depth / 2));
+            }
+            // If shape one is moveable
+            else if (shapeOne.isMoveable()){
+                // Dislodge 100%
+                shapeOne.setDislodged(true);
+                shapeOne.setDislodgeAmount(normal.cpy().scl(-depth));
+            }
+            // If shape two is moveable
+            else if (shapeTwo.isMoveable()){
+                // Dislodge by 100%
+                shapeTwo.setDislodged(true);
+                shapeTwo.setDislodgeAmount(normal.scl(depth));
+            }
+            return true;
         }
 
         /* RAY CASTING */
@@ -416,7 +432,7 @@ public class CollisionDetection {
                 getPenetrationData(index, shapeTwo, shapeOne, normal);
             }
         }
-
+        return true;
     }
 
     // Function to determine whether a point is in a polygon using ray casting
@@ -491,7 +507,7 @@ public class CollisionDetection {
             shapeOne.getPoints().get(vertexIndex).softCollisionInfo.setNormal(closestNormalSame);
             shapeOne.getPoints().get(vertexIndex).softCollisionInfo.setClosestPoint(closestPointSame);
             shapeOne.getPoints().get(vertexIndex).softCollisionInfo.setOtherEdge(otherEdgeIndexSame);
-            World.allContactPoints.add(closestPointSame);
+            World.addContactPoint(closestPointSame);
             //System.out.println("FINAL: DOT: " + normal.dot(closestNormalSame) + ", DEPTH: " + closestSame);
         }
         // Else choose the closest edge in the desired direction
@@ -501,7 +517,7 @@ public class CollisionDetection {
             shapeOne.getPoints().get(vertexIndex).softCollisionInfo.setNormal(closestNormalAway);
             shapeOne.getPoints().get(vertexIndex).softCollisionInfo.setClosestPoint(closestPointAway);
             shapeOne.getPoints().get(vertexIndex).softCollisionInfo.setOtherEdge(otherEdgeIndexAway);
-            World.allContactPoints.add(closestPointAway);
+            World.addContactPoint(closestPointAway);
             //System.out.println("FINAL: DOT: " + normal.dot(closestNormalAway) + ", DEPTH: " + closestAway);
         }
         //System.out.println("\n");

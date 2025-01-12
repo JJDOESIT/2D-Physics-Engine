@@ -41,10 +41,15 @@ public class Header {
         addShapeToHeader(table, font, "Pentagon",  300, 100, false);
         // Add the gravity slider
         addGravitySliderToHeader(table, font, 330, 100);
+        // Add mass label
         addLabelToHeader(table, font, "Mass", 150, 100, new Color(102 / 255f, 51 / 255f, 0 / 255f, 1), new Color(255 / 255f, 255 / 255f, 255 / 255f, 1));
+        // Add length label
         addLabelToHeader(table, font, "Length", 150, 100, new Color(102 / 255f, 51 / 255f, 0 / 255f, 1), new Color(255 / 255f, 255 / 255f, 255 / 255f, 1));
+        // Add rotation label
         addLabelToHeader(table, font, "Rotation", 150, 100, new Color(102 / 255f, 51 / 255f, 0 / 255f, 1), new Color(255 / 255f, 255 / 255f, 255 / 255f, 1));
+        // Add static button
         addStaticButtonToHeader(table, font, "Static", 240, 100);
+        // Next row
         table.row();
         // Add a hexagon option
         addShapeToHeader(table, font, "Hexagon",  300, 100, false);
@@ -52,11 +57,16 @@ public class Header {
         addShapeToHeader(table, font, "Octagon",  300, 100, false);
         // Add a circle option
         addShapeToHeader(table, font, "Circle",  300, 100, false);
-
+        // Add gravity label
         addLabelToHeader(table, font, "Gravity Slider", 330, 100, new Color(204 / 255f, 229 / 255f, 255 / 255f, 1), new Color(0 / 255f, 0 / 255f, 102 / 255f, 1));
+        // Add mass input
         addMassInputToHeader(table, font, "5", 150, 100);
+        // Add side length input
         addSideLengthInputToHeader(table, font, "20", 150, 100);
+        // Add rotation input
         addRotationInputToHeader(table, font, "45", 150, 100);
+        // Add swap mode button
+        addSwapModeButtonToHeader(table, font, "Soft Body", 240, 100);
         stage.addActor(table);
     }
 
@@ -158,6 +168,57 @@ public class Header {
                     // Set the style and set moveable to true
                     button.setStyle(notSelectedStyle);
                     World.setSelectedStaticOption(true);
+                }
+            }
+        });
+        // Add the button to the table
+        table.add(button).width(width).height(height);
+    }
+
+    // Add the static button to the header
+    public static void addSwapModeButtonToHeader(Table table, BitmapFont font, String externalName, float width, float height){
+        // Create the skin
+        Skin skin = new Skin();
+        Pixmap notSelectedPM = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        notSelectedPM.setColor(255 / 255f, 102 / 255f, 102 / 255f, 1);
+        notSelectedPM.fill();
+        Pixmap selectedPM = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        selectedPM.setColor(0 / 255f, 204 / 255f, 0 / 255f, 1);
+        selectedPM.fill();
+        // Add two skins (selected or not selected)
+        skin.add("not-selected",  new TextureRegion(new Texture(notSelectedPM)));
+        skin.add("selected",  new TextureRegion(new Texture(selectedPM)));
+        skin.add("default", font);
+
+        // Create the not selected style
+        TextButton.TextButtonStyle notSelectedStyle = new TextButton.TextButtonStyle();
+        notSelectedStyle.up = skin.getDrawable("not-selected");
+        notSelectedStyle.font = skin.getFont("default");
+
+        // Create the selected style
+        TextButton.TextButtonStyle selectedStyle = new TextButton.TextButtonStyle();
+        selectedStyle.up = skin.getDrawable("selected");
+        selectedStyle.font = skin.getFont("default");
+
+        // Create the button
+        skin.add("default", notSelectedStyle);
+        TextButton button = new TextButton(externalName, skin, "default");
+
+        // Add an event handler to the button
+        button.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                // If the static option is selected
+                if (button.isChecked()){
+                    // Set the style and set movable to false
+                    button.setStyle(selectedStyle);
+                    World.swapMode();
+                }
+                // If the static option is NOT selected
+                else{
+                    // Set the style and set moveable to true
+                    button.setStyle(notSelectedStyle);
+                    World.swapMode();
                 }
             }
         });

@@ -2,7 +2,7 @@ package it.jjdoes.PhysicsEngine.SoftBody;
 
 import com.badlogic.gdx.math.Vector2;
 
-public class Spring {
+public class Spring implements SpringPhysics {
     private final SoftPoint pointOne;
     private final SoftPoint pointTwo;
     private final float length;
@@ -16,13 +16,15 @@ public class Spring {
         this.normal = new Vector2();
     }
 
+    @Override
     // Return the edge as a Vector2 array
     public Vector2[] getEdge(){
         return new Vector2[] {pointOne.getOrigin(), pointTwo.getOrigin()};
     }
 
+    @Override
     // Apply force to the spring so that it achieves it's natural resting length
-    public void applyForce(float strength, float dampener) {
+    public void calculateSpringForce(float strength, float dampener) {
         // Get the origin of both points
         Vector2 pointOneOrigin = pointOne.getOrigin();
         Vector2 pointTwoOrigin = pointTwo.getOrigin();
@@ -49,6 +51,7 @@ public class Spring {
         this.normal.set((pointTwoOrigin.y - pointOneOrigin.y) / distance, (pointOneOrigin.x - pointTwoOrigin.x) / distance);
     }
 
+    @Override
     // Calculate the volume of the shape
     public float calculateVolume(){
         // Area using the cross product
@@ -56,6 +59,7 @@ public class Spring {
         return Math.abs(edgeVector.crs(this.normal)) / 2.0f;
     }
 
+    @Override
     // Function to calculate the pressure of a shape given its volume and desired pressure
     public void calculatePressure(float volume, float pressure){
         // Calculate the distance between the two points

@@ -1,13 +1,15 @@
 package it.jjdoes.PhysicsEngine.RigidBody;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 
 import it.jjdoes.PhysicsEngine.AABB;
 
 public class RigidCircleShape extends RigidShape {
-    private float radius;
+    private final float radius;
 
     // Constructor
     public RigidCircleShape(Vector2 origin, Color color, float radius, float mass, boolean moveable) {
@@ -45,10 +47,13 @@ public class RigidCircleShape extends RigidShape {
         super.setInertia(super.getMass() * (this.radius * this.radius));
     }
 
+    @Override
     // Draw function
-    public void draw(ShapeRenderer shapeRenderer){
+    public void draw(PolygonSpriteBatch polygonSpriteBatch, ShapeRenderer shapeRenderer, TextureRegion texture){
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(super.getColor());
         Vector2 origin = super.getOrigin();
         shapeRenderer.circle(origin.x, origin.y, this.getRadius());
+        shapeRenderer.end();
     }
 }

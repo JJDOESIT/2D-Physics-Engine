@@ -1,6 +1,9 @@
 package it.jjdoes.PhysicsEngine.RigidBody;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 
 import it.jjdoes.PhysicsEngine.AABB;
@@ -47,6 +50,7 @@ public class RigidShape implements RigidShapePhysics {
         return this.color;
     }
 
+    // Overridden
     public AABB getAABB(){
         return new AABB(0,0,0,0);
     }
@@ -194,4 +198,7 @@ public class RigidShape implements RigidShapePhysics {
             this.angle %= 360;
         }
     }
+
+    // Overridden
+    public void draw(PolygonSpriteBatch polygonSpriteBatch, ShapeRenderer shapeRenderer, TextureRegion texture){}
 }

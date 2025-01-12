@@ -32,21 +32,22 @@ import it.jjdoes.PhysicsEngine.RigidBody.RigidShape;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPoint;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShape;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShapeTypes.SoftCircle;
+import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShapeTypes.SoftHexagon;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShapeTypes.SoftOctagon;
+import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShapeTypes.SoftPentagon;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShapeTypes.SoftSquare;
-import sun.security.provider.SHA;
+import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShapeTypes.SoftTriangle;
 
 public class World implements WorldPhysics {
     private static float screenWidth;
     private static float screenHeight;
     private static float headerHeight;
-    public static ArrayList<RigidShape> rigidShapes;
-    public static ArrayList<SoftPolygonShape> softShapes;
-    public static int mode = 0;
-    private static int selectedSoftModel = 1;
+    private static ArrayList<RigidShape> rigidShapes;
+    private static ArrayList<SoftPolygonShape> softShapes;
+    private static int selectedMode;
     private static ArrayList<TextureRegion> textures;
     private static ArrayList<Color> colors;
-    public static ArrayList<Vector2> allContactPoints;
+    private static ArrayList<Vector2> allContactPoints;
     private static int playerShapeIndex;
     private static TextButton selectedShape;
     private static float selectedGravity;
@@ -63,6 +64,7 @@ public class World implements WorldPhysics {
     private static final float resistance = 0.999f;
     private static final float staticFriction = 0.2f;
     private static final float dynamicFriction = 0.1f;
+    private static int selectedSoftModel = 1;
     // Constructor
     public static void initialize(float width, float height, float hHeight, boolean quadtreeBackend){
         screenWidth = width;
@@ -73,6 +75,7 @@ public class World implements WorldPhysics {
         textures = new ArrayList<>();
         colors = new ArrayList<>();
         allContactPoints = new ArrayList<>();
+        selectedMode = 0;
         usingQuadtree = quadtreeBackend;
         quadtree = new Quadtree(new Vector2(screenWidth / 2, screenHeight / 2 - headerHeight / 2), (screenWidth / 2), (screenHeight / 2) - (headerHeight / 2),8, 0);
         Quadtree.scaleFont(1.5f);
@@ -148,7 +151,7 @@ public class World implements WorldPhysics {
 
     // Function to create an initial soft player character
     private static void initializeSoftPlayer(){
-        SoftPolygonShape playerShape = new SoftSquare(new Vector2(250,450), colors.get(2), 100, 0, selectedMass, true, 100);
+        SoftPolygonShape playerShape = new SoftOctagon(new Vector2(250,450), colors.get(2), selectedSideLength, selectedCreationRotation, selectedMass, true, selectedSideLength);
         playerShape.initializeMatcher();
 
         softShapes.add(playerShape);
@@ -158,18 +161,18 @@ public class World implements WorldPhysics {
     // Function to swap the mode from soft to rigid or from rigid to soft
     public static void swapMode(){
         // Swap from rigid to soft
-        if (mode == 0){
+        if (selectedMode == 0){
             rigidShapes.clear();
             initializeSoftWalls();
             initializeSoftPlayer();
-            mode = 1;
+            selectedMode = 1;
         }
         // Swap from soft to rigid
-        else if (mode == 1){
+        else if (selectedMode == 1){
             softShapes.clear();
             initializeRigidWalls();
             initializeRigidPlayer();
-            mode = 0;
+            selectedMode = 0;
         }
     }
 
@@ -222,14 +225,9 @@ public class World implements WorldPhysics {
         if (Gdx.input.isKeyJustPressed(Input.Keys.C)){
             drawContactPoints = !drawContactPoints;
         }
-        // Swap from rigid to soft or from soft to rigid
-        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
-            World.swapMode();
-            return;
-        }
 
         // Rigid mode
-        if (mode == 0) {
+        if (selectedMode == 0) {
             // If the user presses tab
             if (Gdx.input.isKeyJustPressed(Input.Keys.TAB)) {
                 // If a player shape is selected
@@ -249,15 +247,27 @@ public class World implements WorldPhysics {
             playerShape.setVelocity(playerShape.getVelocity().add(shapeDelta));
         }
         // Soft mode
-        else if (mode == 1){
-            // Rotate the shape
-            if (Gdx.input.isKeyPressed(Input.Keys.R)) {
-                softShapes.get(playerShapeIndex).rotateAll(-1);
-            }
-            // Swap soft model mode
+        else if (selectedMode == 1){
+            // Swap the soft model
             if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
                 swapSoftModel();
             }
+
+            // If the user presses tab
+            if (Gdx.input.isKeyJustPressed(Input.Keys.TAB)) {
+                // If a player shape is selected
+                if (playerShapeIndex != -1) {
+                    // Delete the player shape
+                    softShapes.remove(playerShapeIndex);
+                    playerShapeIndex = -1;
+                }
+            }
+            // If no player shape is selected
+            if (playerShapeIndex == -1) {
+                return;
+            }
+
+            // Apply shape velocity
             softShapes.get(playerShapeIndex).offsetVelocity(shapeDelta);
         }
     }
@@ -265,7 +275,7 @@ public class World implements WorldPhysics {
     // Function to handle mouse input from the user
     private static void handleMouseInput(Viewport viewport){
         // Rigid mode
-        if (mode == 0) {
+        if (selectedMode == 0) {
             // If the user left clicks to spawn a shape
             if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
                 // Fetch the mouse position
@@ -339,9 +349,9 @@ public class World implements WorldPhysics {
             }
         }
         // Soft mode
-        else if (mode == 1){
+        else if (selectedMode == 1){
             // If the user left clicks to spawn a shape
-            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
                 // Fetch the mouse position
                 Vector3 mousePosition3D = viewport.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0.0f));
                 // Convert to a 2D vector
@@ -351,15 +361,58 @@ public class World implements WorldPhysics {
                     return;
                 }
 
+                // Spawn a small square where the user clicks
+                SoftPolygonShape mouseShape = new SoftSquare(mousePosition2D, colors.get(0), 1, 1, 1, false, 1);
+                // Loop through each shape
+                for (int index = 0; index < softShapes.size(); index++) {
+                    // If the small circle intersects another shape
+                    if (CollisionDetection.checkCollision(mouseShape, softShapes.get(index))) {
+                        // If the player shape is selected
+                        if (playerShapeIndex != -1) {
+                            // Set the old selected shape to a random color
+                            softShapes.get(playerShapeIndex).setColor(colors.get(random.nextInt(3, colors.size())));
+                        }
+                        // Set the new selected shape to orange
+                        playerShapeIndex = index;
+                        softShapes.get(playerShapeIndex).setColor(colors.get(2));
+
+                        // Reset point collision info
+                        for (SoftPoint softPoint : softShapes.get(index).getPoints()){
+                            softPoint.softCollisionInfo.reset();
+                        }
+
+                        // Reset dislodge info
+                        softShapes.get(index).setDislodged(false);
+                        softShapes.get(index).setDislodgeAmount(new Vector2());
+
+                        return;
+                    }
+                }
+
                 // Create an empty shape
                 SoftPolygonShape shape = null;
                 // Fetch selected shape
                 String shapeType = selectedShape.getText().toString();
                 // Set the color (purple if static / random if not static)
                 Color color = selectedStaticOption ? colors.get(random.nextInt(3, colors.size())) : colors.get(1);
+                // Triangle
+                if (shapeType.equals("Triangle")) {
+                    shape = new SoftTriangle(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption, selectedSideLength);
+                    shape.initializeMatcher();
+                }
                 // Square
-                if (shapeType.equals("Square")) {
+                else if (shapeType.equals("Square")) {
                     shape = new SoftSquare(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption, selectedSideLength);
+                    shape.initializeMatcher();
+                }
+                // Pentagon
+                else if (shapeType.equals("Pentagon")) {
+                    shape = new SoftPentagon(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption, selectedSideLength);
+                    shape.initializeMatcher();
+                }
+                // Hexagon
+                else if (shapeType.equals("Hexagon")) {
+                    shape = new SoftHexagon(mousePosition2D, color, selectedSideLength, selectedCreationRotation, selectedMass, selectedStaticOption, selectedSideLength);
                     shape.initializeMatcher();
                 }
                 else if (shapeType.equals("Octagon")){
@@ -388,7 +441,7 @@ public class World implements WorldPhysics {
     // Logic functionality
     public static void logic(float time, int iterations){
         // If the mode is rigid
-        if (mode == 0){
+        if (selectedMode == 0){
             // If using quadtree
             if (usingQuadtree){
                 rigidStepWithQuadtree(time, iterations);
@@ -399,7 +452,7 @@ public class World implements WorldPhysics {
             }
         }
         // If the mode is soft
-        else if (mode == 1){
+        else if (selectedMode == 1){
             softStep(time, iterations);
         }
     }
@@ -407,7 +460,7 @@ public class World implements WorldPhysics {
     // Step through the simulation with rigid bodies
     private static void rigidStep(float time, int iterations){
         // Clear contact points
-        allContactPoints.clear();
+        resetContactPoints();
 
         // Loop through all rigidShapes
         for (RigidShape shape: rigidShapes) {
@@ -452,7 +505,7 @@ public class World implements WorldPhysics {
                     Vector2[] contactPoints = new Vector2[2];
                     for (int index = 0; index < contactCount; index++){
                         contactPoints[index] = (Vector2) contactPointsData[index + 1];
-                        allContactPoints.add((Vector2) contactPointsData[index + 1]);
+                        addContactPoint((Vector2) contactPointsData[index + 1]);
                     }
 
                     // Apply the impulse
@@ -476,7 +529,7 @@ public class World implements WorldPhysics {
     private static void rigidStepWithQuadtree(float time, int iterations) {
         // Clear quadtree and contact points
         quadtree.clear();
-        allContactPoints.clear();
+        resetContactPoints();
         // Create a hashmap
         Set<AbstractMap.SimpleEntry<RigidShape, RigidShape>> checkedPairs = new HashSet<>();
 
@@ -544,7 +597,7 @@ public class World implements WorldPhysics {
                     Vector2[] contactPoints = new Vector2[2];
                     for (int index = 0; index < contactCount; index++) {
                         contactPoints[index] = (Vector2) contactPointsData[index + 1];
-                        allContactPoints.add(contactPoints[index]);
+                        addContactPoint(contactPoints[index]);
                     }
 
                     // Apply the impulse
@@ -567,7 +620,7 @@ public class World implements WorldPhysics {
     // Step through the simulation with soft bodies
     private static void softStep(float time, int iterations){
         // Clear contact points
-        allContactPoints.clear();
+        resetContactPoints();
 
         // Loop through all softShapes
         for (SoftPolygonShape shape: softShapes) {
@@ -592,16 +645,16 @@ public class World implements WorldPhysics {
                         // Calculate matcher forces
                         shape.getMatcher().offsetAll(shape.getOrigin().sub(shape.getMatcher().getOrigin()));
                         shape.getMatcher().rotateAll(shape.getAngle(shape.getMatcher()) * -1);
-                        shape.getMatcher().calculateSpringForce(500, 0);
+                        shape.getMatcher().calculateSpringForce(1750, 0);
                     }
                     // Calculate shape forces
-                    shape.calculateGravity(selectedGravity * gravity);
-                    shape.calculateSpringForce(500, 35);
+                    shape.calculateGravity((selectedGravity * gravity) / 2);
+                    shape.calculateSpringForce(1750, 50);
 
                     // If we're in pressure mode
                     if (selectedSoftModel == 1) {
                         // Calculate pressure
-                        shape.calculatePressure(15_000);
+                        shape.calculatePressure(45_000);
                     }
 
                     // Part one integration
@@ -610,12 +663,12 @@ public class World implements WorldPhysics {
                     ArrayList<Vector2> savedVelocities = (ArrayList<Vector2>) savedIntegrationData[1];
 
                     // Recalculate forces
-                    shape.calculateGravity(selectedGravity * gravity);
-                    shape.calculateSpringForce(500, 35);
+                    shape.calculateGravity((selectedGravity * gravity) / 2);
+                    shape.calculateSpringForce(1750, 50);
 
                     // If we're in pressure mode
                     if (selectedSoftModel == 1) {
-                        shape.calculatePressure(15_000);
+                        shape.calculatePressure(45_000);
                     }
 
                     // Part two integration
@@ -629,10 +682,10 @@ public class World implements WorldPhysics {
                     // Declare shapeOne and shapeTwo
                     SoftPolygonShape shapeTwo = softShapes.get(inner);
 
-//                    // If there is no overlap on AABB
-//                    if (!SAT.checkCollision(shapeOne.getAABB(), shapeTwo.getAABB())){
-//                        continue;
-//                    }
+                    // If there is no overlap on AABB
+                    if (!CollisionDetection.checkCollision(shapeOne.getAABB(), shapeTwo.getAABB())){
+                        continue;
+                    }
 
                     // Check if two objects are overlapping
                     CollisionDetection.checkCollision(shapeOne, shapeTwo);
@@ -690,6 +743,16 @@ public class World implements WorldPhysics {
         selectedStaticOption = staticOption;
     }
 
+    // Add a contact point
+    public static void addContactPoint(Vector2 contactPoint){
+        allContactPoints.add(contactPoint);
+    }
+
+    // Clear all contact points
+    public static void resetContactPoints(){
+        allContactPoints.clear();
+    }
+
     // Draw function
     public static void draw(Viewport viewport, ShapeRenderer shapeRenderer, PolygonSpriteBatch polygonSpriteBatch){
         // Re-position the camera
@@ -704,24 +767,17 @@ public class World implements WorldPhysics {
         shapeRenderer.end();
 
         // Rigid mode
-        if (mode == 0){
+        if (selectedMode == 0){
             // Loop through all the rigidShapes
             for (RigidShape shape: rigidShapes) {
                 // If the shape is a polygon
                 if (shape.getType() == 0){
-                    polygonSpriteBatch.begin();
-                    RigidPolygonShape polygonShape = (RigidPolygonShape) shape;
-                    polygonShape.draw(polygonSpriteBatch, textures.get(0));
-                    polygonSpriteBatch.end();
+                    shape.draw(polygonSpriteBatch, shapeRenderer, textures.get(0));
                 }
                 // Else if the shape is a circle
                 else if (shape.getType() == 1){
-                    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                    RigidCircleShape circleShape = (RigidCircleShape) shape;
-                    circleShape.draw(shapeRenderer);
-                    shapeRenderer.end();
+                    shape.draw(polygonSpriteBatch, shapeRenderer, textures.get(0));
                 }
-
             }
 
             // Draw a black outline around the rigidShapes
@@ -743,25 +799,11 @@ public class World implements WorldPhysics {
             }
             shapeRenderer.end();
         }
-        else if (mode == 1){
+        // Soft mode
+        else if (selectedMode == 1){
+            // Loop through all softShapes
             for (SoftPolygonShape shape : softShapes){
-                shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-                shapeRenderer.setColor(Color.BLACK);
-                Vector2[][] springs = shape.getSpringsEdges();
-                for (Vector2[] spring : springs){
-                    shapeRenderer.line(spring[0], spring[1]);
-                }
-                for (Vector2 vertex : shape.getVerticesVector()){
-                    shapeRenderer.circle(vertex.x, vertex.y, 3);
-                }
-                shapeRenderer.end();
-
-                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                shapeRenderer.setColor(shape.getColor());
-                for (Vector2 vertex : shape.getVerticesVector()){
-                    shapeRenderer.circle(vertex.x, vertex.y, 2);
-                }
-                shapeRenderer.end();
+                shape.draw(shapeRenderer);
             }
         }
 

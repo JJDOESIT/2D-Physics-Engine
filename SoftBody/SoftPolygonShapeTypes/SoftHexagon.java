@@ -9,14 +9,14 @@ import it.jjdoes.PhysicsEngine.SoftBody.SoftPoint;
 import it.jjdoes.PhysicsEngine.SoftBody.SoftPolygonShape;
 import it.jjdoes.PhysicsEngine.SoftBody.Spring;
 
-public class SoftCircle extends SoftPolygonShape {
-    public SoftCircle(Vector2 origin, Color color, float sideLength, float creationRotation, float mass, boolean moveable, float springLength) {
-        super(origin, color, 20, sideLength, 18f, creationRotation, mass, moveable, springLength);
+public class SoftHexagon extends SoftPolygonShape {
+    public SoftHexagon(Vector2 origin, Color color, float sideLength, float creationRotation, float mass, boolean moveable, float springLength) {
+        super(origin, color, 6, sideLength, 60, creationRotation, mass, moveable, springLength);
     }
 
     @Override
     public void initializeInnerSprings(){
-        int springStep = 9;
+        int springStep = 2;
 
         ArrayList<SoftPoint> points = super.getPoints();
         ArrayList<SoftPoint> desiredPoints = super.getMatcher().getPoints();

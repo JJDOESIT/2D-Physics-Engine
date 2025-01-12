@@ -40,14 +40,9 @@ public class Main implements ApplicationListener {
 
     @Override
     public void render() {
-        //printFps();
         input();
         logic();
         draw();
-    }
-
-    private void printFps(){
-        System.out.println((int) (1 / Gdx.graphics.getDeltaTime()));
     }
 
     private void input(){
@@ -60,7 +55,7 @@ public class Main implements ApplicationListener {
 
     private void draw(){
         World.draw(this.viewport, this.shapeRenderer, this.polygonSpriteBatch);
-        World.quadtree.drawQuadTree(this.viewport, this.shapeRenderer, this.spriteBatch, false);
+        //World.quadtree.drawQuadTree(this.viewport, this.shapeRenderer, this.spriteBatch, false);
         this.stage.draw();
     }
 
