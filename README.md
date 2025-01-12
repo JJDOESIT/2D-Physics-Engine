@@ -3,6 +3,15 @@
 
 ---
 
+## How to Use  
+1. Clone the repository:  
+   ```bash
+   git clone https://github.com/your-repo/2d-physics-simulation.git
+   cd 2d-physics-simulation
+2. Download the <a href="https://github.com/JJDOESIT/2D-Physics-Engine/releases/tag/v1.0.0">release</a> version for your OS.
+
+---
+
 ## Features  
 - **Support for Multiple Shapes**  
   - Triangle, Square, Hexagon, Octagon, and Circle  
@@ -29,12 +38,3 @@ Simulate soft bodies with flexible and dynamic behavior.
 | **Example 1** | **Example 2** |  
 |---------------|---------------|  
 | ![Soft Body Example 1](https://github.com/user-attachments/assets/fc9da1ac-e474-4585-a333-66a7387243ee) | ![Soft Body Example 2](https://github.com/user-attachments/assets/eed22bf8-0171-4d6c-83ab-a68569c5e566) |  
-
----
-
-## How to Use  
-1. Clone the repository:  
-   ```bash
-   git clone https://github.com/your-repo/2d-physics-simulation.git
-   cd 2d-physics-simulation
-2. Download the release version for your OS. 
