@@ -9,6 +9,7 @@
    git clone https://github.com/your-repo/2d-physics-simulation.git
    cd 2d-physics-simulation
 2. Download the <a href="https://github.com/JJDOESIT/2D-Physics-Engine/releases/tag/v1.0.0">release</a> version for your OS.
+   - If permission denied, run ```chmod +x 700 <path to file>```
 
 ---
 
