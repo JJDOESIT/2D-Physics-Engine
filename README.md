@@ -4,8 +4,13 @@
 ---
 
 ## How to Use  
-- Download the <a href="https://github.com/JJDOESIT/2D-Physics-Engine/releases/tag/v1.0.0">release</a> version for your OS.
-   - If permission denied, run ```chmod 700 <path to file>```
+1. Download the <a href="https://github.com/JJDOESIT/2D-Physics-Engine/releases/tag/v1.0.0">release</a> version for your OS.
+2. Extract the folder
+3. Run:
+   - Windows X64: ```./PhysicsEngine-winX64/PhysicsEngine-1.0.0-winX64/PhysicsEngine.exe```
+   - Mac X64: ```./PhysicsEngine-macX64/PhysicsEngine-1.0.0-macX64/PhysicsEngine.app/Contents/MacOS/PhysicsEngine```
+   - Linux X64: ```./PhysicsEngine-linuxX64/PhysicsEngine-1.0.0-linuxX64/PhysicsEngine```
+4. If permission denied, run ```chmod 700 <path to file>```
 
 ---
 
