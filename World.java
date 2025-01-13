@@ -151,7 +151,7 @@ public class World implements WorldPhysics {
 
     // Function to create an initial soft player character
     private static void initializeSoftPlayer(){
-        SoftPolygonShape playerShape = new SoftOctagon(new Vector2(250,450), colors.get(2), selectedSideLength, selectedCreationRotation, selectedMass, true, selectedSideLength);
+        SoftPolygonShape playerShape = new SoftSquare(new Vector2(250,450), colors.get(2), selectedSideLength, selectedCreationRotation, selectedMass, true, selectedSideLength);
         playerShape.initializeMatcher();
 
         softShapes.add(playerShape);

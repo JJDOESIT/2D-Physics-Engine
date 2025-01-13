@@ -28,9 +28,9 @@ public class Header {
         table.top().left();
 
         // Default font
-        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("swanseaBold.ttf"));
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("queensides.otf"));
         FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        parameter.size = 30;
+        parameter.size = 35;
         BitmapFont font = generator.generateFont(parameter); // font size 12 pixels
 
         // Add a triangle option
@@ -279,15 +279,41 @@ public class Header {
         // Set the default mass
         World.setSelectedMass(Float.parseFloat(text));
 
+        // Custom filter
+        TextField.TextFieldFilter decimalFilter = new TextField.TextFieldFilter() {
+            @Override
+            public boolean acceptChar(TextField textField, char c) {
+                // Allow digits and one decimal point
+                String text = textField.getText();
+                if (Character.isDigit(c)) {
+                    // Allow digits
+                    return true;
+                }
+                if (c == '.' && !text.contains(".")) {
+                    // Allow a single decimal point
+                    return true;
+                }
+                // Disallow everything else
+                return false;
+            }
+        };
+
+        textField.setTextFieldFilter(decimalFilter);
+
         // Add a change listener
         textField.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                // If the input is not empty
-                String input = textField.getText();
-                if (input.isEmpty()) return;
-                // Set the mass
-                World.setSelectedMass(Float.parseFloat(input));
+                try {
+                    // If the input is not empty
+                    String input = textField.getText();
+                    if (input.isEmpty()) return;
+                    // Set the mass
+                    World.setSelectedMass(Float.parseFloat(input));
+                }
+                catch (Exception error){
+                    System.out.println("Invalid input");
+                }
             }
         });
 
@@ -322,13 +348,39 @@ public class Header {
         // Set the default side length
         World.setSelectedCreationRotation(Float.parseFloat(text));
 
+        // Custom filter
+        TextField.TextFieldFilter negativeFilter = new TextField.TextFieldFilter() {
+            @Override
+            public boolean acceptChar(TextField textField, char c) {
+                // Allow digits and one decimal point
+                String text = textField.getText();
+                if (Character.isDigit(c)) {
+                    // Allow digits
+                    return true;
+                }
+                if (c == '-' && text.isEmpty()) {
+                    // Allow a single decimal point
+                    return true;
+                }
+                // Disallow everything else
+                return false;
+            }
+        };
+
+        textField.setTextFieldFilter(negativeFilter);
+
         // Add a change listener
         textField.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                String input = textField.getText();
-                if (input.isEmpty()) return;
-                World.setSelectedCreationRotation(Float.parseFloat(input) % 360);
+                try {
+                    String input = textField.getText();
+                    if (input.isEmpty()) return;
+                    World.setSelectedCreationRotation(Float.parseFloat(input) % 360);
+                }
+                catch (Exception error){
+                    System.out.println("Invalid Input");
+                }
             }
         });
 
@@ -367,9 +419,14 @@ public class Header {
         textField.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                String input = textField.getText();
-                if (input.isEmpty()) return;
-                World.setSelectedSideLength(Float.parseFloat(input));
+                try {
+                    String input = textField.getText();
+                    if (input.isEmpty()) return;
+                    World.setSelectedSideLength(Float.parseFloat(input));
+                }
+                catch (Exception error){
+                    System.out.println("Invalid input");
+                }
             }
         });
 
