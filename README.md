@@ -4,14 +4,25 @@
 ---
 
 ## How to Use  
-1. Download the <a href="https://github.com/JJDOESIT/2D-Physics-Engine/releases/tag/v1.0.0">release</a> version for your OS.
-2. Extract the folder
-3. Run:
-   - Windows X64: ```./PhysicsEngine-winX64/PhysicsEngine-1.0.0-winX64/PhysicsEngine.exe```
-   - Mac X64: ```./PhysicsEngine-macX64/PhysicsEngine-1.0.0-macX64/PhysicsEngine.app/Contents/MacOS/PhysicsEngine```
-   - Linux X64: ```./PhysicsEngine-linuxX64/PhysicsEngine-1.0.0-linuxX64/PhysicsEngine```
-4. If permission denied, run ```chmod 700 <path to file>```
 
+1. **Download** the [release version](https://github.com/JJDOESIT/2D-Physics-Engine/releases/tag/v1.0.0) for your operating system.  
+2. **Extract** the downloaded folder.  
+3. **Run the executable** based on your OS:  
+   - **Windows X64**:  
+     ```bash
+     ./PhysicsEngine-winX64/PhysicsEngine-1.0.0-winX64/PhysicsEngine.exe
+     ```  
+   - **Mac X64**:  
+     ```bash
+     ./PhysicsEngine-macX64/PhysicsEngine-1.0.0-macX64/PhysicsEngine.app/Contents/MacOS/PhysicsEngine
+     ```  
+   - **Linux X64**:  
+     ```bash
+     ./PhysicsEngine-linuxX64/PhysicsEngine-1.0.0-linuxX64/PhysicsEngine
+     ```  
+4. If you encounter a "Permission Denied" error, run the following command to set the correct permissions:  
+   ```bash
+   chmod 700 <path to file>
 ---
 
 ## Features  
@@ -22,6 +33,33 @@
   - Adjust mass, size, and rotation  
 - **Static Objects**  
   - Non-moveable objects for dynamic interactions  
+
+---
+
+# Controls  
+
+### General  
+- **Choose a Shape**: Select one of the six available options.  
+- **Spawn a Shape**: Left-click in an open area of the field.  
+- **Move a Shape**: Use the **WASD** keys.  
+- **Select a Shape**: Left-click on the shape you want to control.  
+- **Delete a Shape**: Select a shape and press **Tab**.  
+
+### Modifying Shape Properties  
+- **Change Mass**:  
+  - Enter a positive floating-point value in the input field.  
+- **Change Side Length**:  
+  - Enter a positive integer in the input field.  
+- **Set Creation Rotation**:  
+  - Enter a positive or negative integer in the input field to define the spawn angle.  
+
+### Additional Features  
+- **Spawn Static Shapes**:  
+  - Enable the static option to spawn non-movable shapes.  
+- **Switch to Soft Bodies**:  
+  - Enable the soft body option to use soft-body physics.  
+  - **Note**: Circles are made up of 20 sides, so it’s recommended to choose a low side length (1-100).  
+  - **Switch Models**: Press **M** to toggle between the spring-pressure model and the spring-shape matcher model.  
 
 ---
 
