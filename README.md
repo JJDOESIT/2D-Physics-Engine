@@ -59,7 +59,15 @@
 - **Switch to Soft Bodies**:  
   - Enable the soft body option to use soft-body physics.  
   - **Note**: Circles are made up of 20 sides, so it’s recommended to choose a low side length (1-100).  
-  - **Switch Models**: Press **M** to toggle between the spring-pressure model and the spring-shape matcher model.  
+  - **Switch Models**: Press **M** to toggle between the spring-pressure model and the spring-shape matcher model.
+
+---
+
+## Known Issues with Soft Bodies  
+- **Triangle Stacking**:  
+  - Triangles do not stack well due to pixel-perfect edge collisions, leading to infinite displacement.  
+- **Mass Discrepancy Collisions**:  
+  - Collisions between very heavy objects and significantly lighter ones can result in unpredictable behavior.  
 
 ---
 
