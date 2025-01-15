@@ -398,7 +398,6 @@ public class CollisionDetection {
                 shapeTwo.setDislodged(true);
                 shapeTwo.setDislodgeAmount(normal.scl(depth));
             }
-            return true;
         }
 
         /* RAY CASTING */

@@ -642,34 +642,20 @@ public class World implements WorldPhysics {
                         // Calculate matcher forces
                         shape.getMatcher().offsetAll(shape.getOrigin().sub(shape.getMatcher().getOrigin()));
                         shape.getMatcher().rotateAll(shape.getAngle(shape.getMatcher()) * -1);
-                        shape.getMatcher().calculateSpringForce(1750, 0);
+                        shape.getMatcher().calculateSpringForce(15, 0f);
                     }
                     // Calculate shape forces
-                    shape.calculateGravity((selectedGravity * gravity) / 2);
-                    shape.calculateSpringForce(1750, 50);
+                    shape.calculateGravity(selectedGravity * gravity, time / iterations);
+                    shape.calculateSpringForce(15f, 0.3f);
 
                     // If we're in pressure mode
                     if (selectedSoftModel == 1) {
                         // Calculate pressure
-                        shape.calculatePressure(45_000);
+                        shape.calculatePressure(400);
                     }
 
-                    // Part one integration
-                    Object[] savedIntegrationData = shape.integratePartOne(time / iterations);
-                    ArrayList<Vector2> savedForces = (ArrayList<Vector2>) savedIntegrationData[0];
-                    ArrayList<Vector2> savedVelocities = (ArrayList<Vector2>) savedIntegrationData[1];
-
-                    // Recalculate forces
-                    shape.calculateGravity((selectedGravity * gravity) / 2);
-                    shape.calculateSpringForce(1750, 50);
-
-                    // If we're in pressure mode
-                    if (selectedSoftModel == 1) {
-                        shape.calculatePressure(45_000);
-                    }
-
-                    // Part two integration
-                    shape.integratePartTwo(savedForces, savedVelocities, time / iterations);
+                    // Integrate the shape
+                    shape.integrate(time / iterations);
                 }
             }
             // Loop through the polygon softShapes

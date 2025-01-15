@@ -14,6 +14,6 @@ public interface SoftPointPhysics {
     public void offsetOrigin(Vector2 offset);
     public Vector2 getOrigin();
     public float getMass();
-    public void calculateGravity(float gravity);
+    public void calculateGravity(float gravity, float time);
     public void calculateResistance(float resistance);
 }

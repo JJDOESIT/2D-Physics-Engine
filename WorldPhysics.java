@@ -43,7 +43,6 @@ public interface WorldPhysics {
             if (shapeOne.isDislodged()) {
                 shapeOne.offsetAll(shapeOne.getDislodgeAmount());
                 shapeOne.setDislodged(false);
-                return;
             }
         }
 

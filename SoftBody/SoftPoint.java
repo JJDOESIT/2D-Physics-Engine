@@ -7,7 +7,7 @@ public class SoftPoint implements SoftPointPhysics {
     private final Vector2 force;
     private Vector2 origin;
     private final float mass;
-    private final boolean moveable;
+    private boolean moveable;
     public SoftCollisionInfo softCollisionInfo;
 
     // Constructor
@@ -103,8 +103,8 @@ public class SoftPoint implements SoftPointPhysics {
 
     @Override
     // Calculate the gravity applied
-    public void calculateGravity(float gravity){
-        this.force.y += gravity;
+    public void calculateGravity(float gravity, float time){
+        this.velocity.y += gravity * time;
     }
 
     @Override

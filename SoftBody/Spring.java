@@ -30,24 +30,35 @@ public class Spring implements SpringPhysics {
         Vector2 pointTwoOrigin = pointTwo.getOrigin();
 
         // Calculate the distance between the two points
-        float distance = pointOne.getOrigin().dst(pointTwo.getOrigin());
+        float distance = pointTwo.getOrigin().dst(pointOne.getOrigin());
 
         // Avoid division by zero
         if (distance != 0) {
-            // Calculate the relative velocity
+            // Spring normal
+            Vector2 springNormal = pointTwoOrigin.cpy().sub(pointOneOrigin);
+            springNormal.nor();
+
+            // Calculate the deviation from the desired length (spring force magnitude)
+            float springForceMagnitude = (distance - this.length) * strength;
+
+            // Calculate the relative velocity along the spring direction
             Vector2 relativeVelocity = pointOne.getVelocity().sub(pointTwo.getVelocity());
+            float velocityAlongSpring = relativeVelocity.dot(springNormal);
 
-            // Calculate the spring force
-            float springForce = ((distance - this.length) * strength) + ((relativeVelocity.x * (pointOneOrigin.x - pointTwoOrigin.x) + relativeVelocity.y * (pointOneOrigin.y - pointTwoOrigin.y)) * dampener) / distance;
+            // Calculate the damping effect
+            float dampingForceMagnitude = velocityAlongSpring * dampener;
 
-            // Calculate the force components
-            Vector2 force = new Vector2(pointOneOrigin.cpy().sub(pointTwoOrigin)).scl(springForce / distance);
+            // Combine spring and damping forces into a single velocity adjustment magnitude
+            float totalForceMagnitude = springForceMagnitude - dampingForceMagnitude;
 
-            // Add the force
-            this.pointOne.offsetForce(force.cpy().scl(-1));
-            this.pointTwo.offsetForce(force);
+            // Calculate the velocity adjustment vector (magnitude * direction)
+            Vector2 velocityAdjustment = springNormal.scl(totalForceMagnitude);
+
+            // Update the velocities of the two points
+            pointOne.setVelocity(pointOne.getVelocity().add(velocityAdjustment.cpy().scl(1)));
+            pointTwo.setVelocity(pointTwo.getVelocity().add(velocityAdjustment.cpy().scl(-1)));
         }
-        // Calculate the normal
+        // Calculate the normal for pressure
         this.normal.set((pointTwoOrigin.y - pointOneOrigin.y) / distance, (pointOneOrigin.x - pointTwoOrigin.x) / distance);
     }
 
@@ -65,12 +76,14 @@ public class Spring implements SpringPhysics {
         // Calculate the distance between the two points
         float distance = pointOne.getOrigin().dst(pointTwo.getOrigin());
 
-        // Calculate the pressure force
-        float pressureVolume = distance * pressure * (1.0f / volume);
+        // Calculate the pressure velocity adjustment
+        float pressureVelocity = distance * pressure * (1.0f / volume);
 
-        // Apply the force to both points
-        Vector2 force = this.normal.cpy().scl(pressureVolume);
-        pointOne.offsetForce(force);
-        pointTwo.offsetForce(force);
+        // Calculate the velocity adjustment vector
+        Vector2 velocityAdjustment = this.normal.cpy().scl(pressureVelocity);
+
+        // Apply the velocity adjustment to both points
+        pointOne.setVelocity(pointOne.getVelocity().add(velocityAdjustment.cpy().scl(1)));
+        pointTwo.setVelocity(pointTwo.getVelocity().add(velocityAdjustment.cpy().scl(1)));
     }
 }

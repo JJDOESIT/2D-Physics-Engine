@@ -96,49 +96,10 @@ public class SoftPolygonShape implements SoftPolygonShapePhysics {
     }
 
     @Override
-    // Part one of euler integration
-    public Object[] integratePartOne(float time){
-        float drx, dry;
-        ArrayList<Vector2> savedForces = new ArrayList<>();
-        ArrayList<Vector2> savedVelocities = new ArrayList<>();
-
-        // Save forces and velocities
-        for (SoftPoint softPoint : this.points) {
-            savedForces.add(softPoint.getForce());
-            savedVelocities.add(softPoint.getVelocity());
-
-            Vector2 force = new Vector2((softPoint.getForce().x) * time, (softPoint.getForce().y) * time);
-            // Update velocity with current forces
-            softPoint.offsetVelocity(force);
-
-            drx = softPoint.getVelocity().x * time;
-            dry = softPoint.getVelocity().y * time;
-
-            softPoint.offsetOrigin(new Vector2(drx, dry));
-        }
-        return new Object[] {savedForces, savedVelocities};
-    }
-
-    @Override
-    // Part two of euler integration
-    public void integratePartTwo(ArrayList<Vector2> savedForces, ArrayList<Vector2> savedVelocities, float time){
-        float drx, dry;
-        // Final velocity updates
-        for (int index = 0; index < this.points.size(); index++) {
-            SoftPoint softPoint = this.points.get(index);
-
-            float vx = savedVelocities.get(index).x +
-                ((((softPoint.getForce().x + savedForces.get(index).x)) * time) / 2);
-            float vy = savedVelocities.get(index).y +
-                ((((softPoint.getForce().y + savedForces.get(index).y)) * time) / 2);
-
-            softPoint.setVelocity(new Vector2(vx, vy));
-
-            drx = softPoint.getVelocity().x * time;
-            dry = softPoint.getVelocity().y * time;
-
-            softPoint.offsetOrigin(new Vector2(drx, dry));
-            softPoint.resetForce();
+    // Integrate velocity
+    public void integrate(float time){
+        for (SoftPoint softPoint : this.points){
+            softPoint.offsetOrigin(softPoint.getVelocity().scl(time));
         }
     }
 
@@ -152,9 +113,9 @@ public class SoftPolygonShape implements SoftPolygonShapePhysics {
 
     @Override
     // Apply gravity to each point
-    public void calculateGravity(float gravity){
+    public void calculateGravity(float gravity, float time){
         for (SoftPoint softPoint : this.points){
-            softPoint.calculateGravity(gravity);
+            softPoint.calculateGravity(gravity, time);
         }
     }
 

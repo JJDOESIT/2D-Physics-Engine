@@ -11,10 +11,9 @@ public interface SoftPolygonShapePhysics {
     public void initializeInnerSprings();
     public void removeInnerSprings();
     public void initializeMatcher();
-    public Object[] integratePartOne(float time);
-    public void integratePartTwo(ArrayList<Vector2> savedForces, ArrayList<Vector2> savedVelocities, float time);
+    public void integrate(float time);
     public void calculateResistance(float resistance);
-    public void calculateGravity(float gravity);
+    public void calculateGravity(float gravity, float time);
     public void calculateSpringForce(float strength, float dampener);
     public void calculatePressure(float pressure);
     public SoftPolygonShape getMatcher();
