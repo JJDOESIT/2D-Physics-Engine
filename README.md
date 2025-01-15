@@ -10,15 +10,15 @@
 3. **Run the executable** based on your OS:  
    - **Windows X64**:  
      ```bash
-     ./PhysicsEngine-winX64/PhysicsEngine-1.0.0-winX64/PhysicsEngine.exe
+     ./PhysicsEngine-1.0.0-winX64/PhysicsEngine.exe
      ```  
    - **Mac X64**:  
      ```bash
-     ./PhysicsEngine-macX64/PhysicsEngine-1.0.0-macX64/PhysicsEngine.app/Contents/MacOS/PhysicsEngine
+     ./PhysicsEngine-1.0.0-macX64/PhysicsEngine.app/Contents/MacOS/PhysicsEngine
      ```  
    - **Linux X64**:  
      ```bash
-     ./PhysicsEngine-linuxX64/PhysicsEngine-1.0.0-linuxX64/PhysicsEngine
+     ./PhysicsEngine-1.0.0-linuxX64/PhysicsEngine
      ```  
 4. If you encounter a "Permission Denied" error, run the following command to set the correct permissions:  
    ```bash
